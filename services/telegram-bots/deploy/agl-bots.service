@@ -1,0 +1,28 @@
+[Unit]
+Description=AGL and akaalexey Telegram inboxes
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+DynamicUser=yes
+WorkingDirectory=/opt/agl-bots
+EnvironmentFile=/etc/agl-bots.env
+Environment=BOT_DATA_DIR=/var/lib/agl-bots
+Environment=PYTHONDONTWRITEBYTECODE=1
+StateDirectory=agl-bots
+StateDirectoryMode=0700
+ExecStart=/usr/bin/python3 /opt/agl-bots/bot.py
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=45
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+RestrictSUIDSGID=true
+
+[Install]
+WantedBy=multi-user.target
+
