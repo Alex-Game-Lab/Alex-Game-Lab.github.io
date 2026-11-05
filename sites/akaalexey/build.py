@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """Build the dependency-free static website from site_config.json."""
 from pathlib import Path
-import json, html, shutil
+import json, html, shutil, re
+from urllib.parse import urlsplit
 
 ROOT=Path(__file__).resolve().parent
 CFG=json.loads((ROOT/'site_config.json').read_text())
 KIND=CFG['kind']
 ORIGIN=CFG['origins'][KIND].rstrip('/')
+BASE_PATH=urlsplit(ORIGIN).path.rstrip('/')
 AGL=CFG['origins']['agl'].rstrip('/')
 PERSONAL=CFG['origins']['personal'].rstrip('/')
 TG='https://t.me/akaAlexey'
@@ -77,7 +79,10 @@ def page(path,title,description,body,cover='rublemet-cover.jpg',noindex=False):
     target=OUT/(path.strip('/')+'/index.html' if path!='/' else 'index.html')
     if path=='/404.html':target=OUT/'404.html'
     target.parent.mkdir(parents=True,exist_ok=True)
-    target.write_text(head(title,description,path,cover,noindex)+header()+'<main id="main">'+body+'</main>'+footer()+'</body></html>')
+    document=head(title,description,path,cover,noindex)+header()+'<main id="main">'+body+'</main>'+footer()+'</body></html>'
+    if BASE_PATH:
+        document=re.sub(r'\b(href|src|srcset)="(/(?!/)[^"]*)"',lambda m:f'{m[1]}="{BASE_PATH}{m[2]}"',document)
+    target.write_text(document)
 
 def agl_home():
     return f'''
@@ -111,7 +116,7 @@ def game_page(personal=False):
 
 def privacy():
     theme='<h2>Настройка темы</h2><p>Выбранная светлая или тёмная тема сохраняется в локальном хранилище браузера. Это функциональная настройка; она не отправляется владельцу сайта и не используется для отслеживания. Её можно удалить вместе с данными сайта в браузере.</p>' if IS_PERSONAL else ''
-    return f'''<section class="page-hero shell"><nav class="breadcrumbs" aria-label="Хлебные крошки"><a href="/">Главная</a><span aria-hidden="true">/</span><span>Конфиденциальность</span></nav><p class="eyebrow">ДАННЫЕ И СВЯЗЬ</p><h1>Конфиденциальность.</h1><p class="lead">Как устроена эта версия сайта и что происходит при переходе к внешним сервисам.</p></section><article class="legal shell"><p class="small-note">Обновлено 5 ноября 2026 года.</p><h2>Что делает сайт</h2><p>Это информационный сайт {"Алексея (akaalexey)" if IS_PERSONAL else "игровой команды Alex Game Lab"}. На страницах нет регистрации, контактных форм, оплаты, рассылки и подключённых счётчиков аналитики. Сайт не запрашивает имя, почту или номер телефона посетителя.</p><p>Шрифты, иллюстрации и сценарии загружаются с самого сайта. Код сайта не устанавливает рекламные или аналитические cookies.</p>{theme}<h2>Техническая работа хостинга</h2><p>Эта версия размещена на ChatGPT Sites. Для доставки страниц и обеспечения работы сервиса провайдер может обрабатывать технические сведения запроса, включая IP-адрес и данные браузера. Отсутствие форм и аналитики в коде сайта не означает отсутствия технической обработки у хостинга. Условия провайдера описаны в <a href="https://openai.com/policies/privacy-policy/">его политике конфиденциальности</a>.</p><h2>Обращения и внешние ссылки</h2><p>Связаться с Алексеем можно через <a href="{TG}">Telegram @akaAlexey</a>. При переходе к Telegram, GitHub и другим внешним сервисам действуют их условия и практики обработки данных.</p><p>Если вы отправляете сообщение, указанные в нём сведения используются для ответа и обсуждения вашего обращения. Для первого сообщения достаточно описать вопрос; документы и другие дополнительные сведения сайт не запрашивает.</p><h2>Вопросы о данных</h2><p>По вопросам об этой странице или об информации, которую вы ранее прислали Алексею, можно написать в <a href="{TG}">Telegram</a>.</p><h2>Границы этой страницы</h2><p>Информация относится к этому сайту. Она не заменяет отдельное описание обработки данных в приложении «Рублемёт» и других сервисах. При изменении хостинга или добавлении новых функций сведения на этой странице обновляются.</p><div class="button-row">{button("Вернуться на главную","/",True)}</div></article>'''
+    return f'''<section class="page-hero shell"><nav class="breadcrumbs" aria-label="Хлебные крошки"><a href="/">Главная</a><span aria-hidden="true">/</span><span>Конфиденциальность</span></nav><p class="eyebrow">ДАННЫЕ И СВЯЗЬ</p><h1>Конфиденциальность.</h1><p class="lead">Как устроена эта версия сайта и что происходит при переходе к внешним сервисам.</p></section><article class="legal shell"><p class="small-note">Обновлено 6 ноября 2026 года.</p><h2>Что делает сайт</h2><p>Это информационный сайт {"Алексея (akaalexey)" if IS_PERSONAL else "игровой команды Alex Game Lab"}. На страницах нет регистрации, контактных форм, оплаты, рассылки и подключённых счётчиков аналитики. Сайт не запрашивает имя, почту или номер телефона посетителя.</p><p>Шрифты, иллюстрации и сценарии загружаются с самого сайта. Код сайта не устанавливает рекламные или аналитические cookies.</p>{theme}<h2>Техническая работа хостинга</h2><p>Эта версия размещена на GitHub Pages. Для доставки страниц и обеспечения работы сервиса провайдер может обрабатывать технические сведения запроса, включая IP-адрес и данные браузера. Отсутствие форм и аналитики в коде сайта не означает отсутствия технической обработки у хостинга. Условия провайдера описаны в <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">его политике конфиденциальности</a>.</p><h2>Обращения и внешние ссылки</h2><p>Связаться с Алексеем можно через <a href="{TG}">Telegram @akaAlexey</a>. При переходе к Telegram, GitHub и другим внешним сервисам действуют их условия и практики обработки данных.</p><p>Если вы отправляете сообщение, указанные в нём сведения используются для ответа и обсуждения вашего обращения. Для первого сообщения достаточно описать вопрос; документы и другие дополнительные сведения сайт не запрашивает.</p><h2>Вопросы о данных</h2><p>По вопросам об этой странице или об информации, которую вы ранее прислали Алексею, можно написать в <a href="{TG}">Telegram</a>.</p><h2>Границы этой страницы</h2><p>Информация относится к этому сайту. Она не заменяет отдельное описание обработки данных в приложении «Рублемёт» и других сервисах. При изменении хостинга или добавлении новых функций сведения на этой странице обновляются.</p><div class="button-row">{button("Вернуться на главную","/",True)}</div></article>'''
 
 if IS_PERSONAL:
     page('/','Алексей · akaalexey — разработчик ПО и игр','Разработчик ПО и игр, основатель AGL. Опыт, проект «Рублемёт» и связь для предложений работы и идей.',personal_home(),'alexey-workspace.jpg')

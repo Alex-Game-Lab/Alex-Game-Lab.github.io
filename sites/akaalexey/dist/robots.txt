@@ -1,3 +1,3 @@
 User-agent: *
-Disallow: /
-Sitemap: https://akaalexey-portfolio-1105-a93f.silkenapple4.chatgpt.site/sitemap.xml
+Allow: /
+Sitemap: https://alexgamelab.ru/akaalexey/sitemap.xml

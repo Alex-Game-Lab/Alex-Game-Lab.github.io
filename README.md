@@ -1,31 +1,41 @@
-# Alex Game Lab — official website
+# Alex Game Lab и akaalexey
 
-Source code for the official website of **Alex Game Lab (AGL)**, an independent game development studio.
+Два статических сайта на GitHub Pages:
 
-## Website
-https://alex-game-lab.github.io/
+- AGL: https://alexgamelab.ru/
+- Личный сайт Алексея: https://alexgamelab.ru/akaalexey/
 
-## Deployment
-This is the public organization Pages repository `Alex-Game-Lab/Alex-Game-Lab.github.io`.
-The deployment workflow in `.github/workflows/pages.yml` runs on pushes to `main`.
+Адрес https://alex-game-lab.github.io/ перенаправляет на настроенный домен AGL.
+Отдельный домен akaalexey.ru ещё не подключён к этой публикации.
 
-1. Open **Settings → Pages** in this repository.
-2. Under **Build and deployment**, select **GitHub Actions** as the source.
-3. The workflow **Publish AGL website** deploys the site.
-4. Set a custom domain in **Settings → Pages → Custom domain** only after domain ownership and DNS have been configured.
+## Разработка и публикация
 
-No build tool, tracking script, or external dependencies are required.
+Исходники AGL находятся в `sites/agl/`, личного сайта — в `sites/akaalexey/`.
+В каждой папке есть генератор `build.py`, настройки `site_config.json`, готовый
+каталог `dist/` и проверки ссылок. Зависимости для сборки не требуются: Python 3.11+.
 
-## Files
-- `index.html` — site layout, copy, and metadata
-- `assets/site.css` — visual styling and responsive design
-- `assets/site.js` — footer year
-- `assets/logo.svg` — studio favicon
+```bash
+python3 tools/build_pages.py --sync-root
+```
 
-## Before the Play Store launch
-- [ ] Add confirmed studio contact email and actual release links.
-- [ ] Add verified gameplay screenshots and artwork.
-- [ ] Review and publish an accurate privacy policy once production data practices are confirmed.
-- [ ] Add the purchased domain and verify HTTPS.
+Команда собирает оба сайта, проверяет восемь страниц, ресурсы, якоря,
+переходы между сайтами и карту сайта. Результат для публикации — `_site/`.
+Параметр `--sync-root` обновляет также статические копии в корне репозитория
+для совместимости с публикацией Pages из ветки.
 
-The Rublemet game is still in development; the page does not claim it is available in Google Play.
+Workflow `.github/workflows/pages.yml` запускается при изменении `main`.
+Он собирает сайты заново и публикует только `_site/`: HTML, CSS, JavaScript,
+изображения, шрифты, sitemap, robots и CNAME. Исходники, тесты и код ботов в
+этот артефакт не входят. В Settings → Pages источником можно выбрать GitHub Actions.
+
+Сведения о хостинге, канонические ссылки и ссылки между сайтами соответствуют
+GitHub Pages. Личный сайт поддерживает размещение в подпапке, обе темы и
+отключение анимации согласно настройкам посетителя.
+
+## Другие материалы
+
+- `WEBSITES.md` — устройство сайтов и проверка публикации.
+- `services/telegram-bots/` — подготовленный сервис двух ботов и инструкция;
+  GitHub Pages не запускает его. Реальные токены в репозитории отсутствуют.
+- «Рублемёт» представлен как проект в разработке; ссылка на магазин и дата
+  релиза не выдумываются.

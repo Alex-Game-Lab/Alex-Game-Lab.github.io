@@ -4,6 +4,8 @@ Thumbs.db
 .vscode/
 node_modules/
 dist/
+_site/
+__pycache__/
 .env
 .env.*
 !.env.example

@@ -6,6 +6,8 @@ from urllib.parse import urlsplit,unquote
 import json,re,sys
 root=Path(__file__).resolve().parents[1]
 dist=root/'dist'
+cfg=json.loads((root/'site_config.json').read_text())
+base_path=urlsplit(cfg['origins'][cfg['kind']]).path.rstrip('/')
 class Page(HTMLParser):
  def __init__(self): super().__init__();self.ids=set();self.refs=[];self.h1=0;self.title=0;self.description=0;self.scripts=[];self.jsonmode=False;self.jsonbuf=''
  def handle_starttag(self,tag,attrs):
@@ -35,7 +37,11 @@ for path,page in pages.items():
   u=urlsplit(ref)
   if u.scheme or u.netloc or ref.startswith('data:'):continue
   assert ref!='#',('empty target',path)
-  target=(dist/unquote(u.path.lstrip('/')))if u.path.startswith('/')else path.parent/unquote(u.path)
+  local_path=u.path
+  if local_path.startswith('/') and base_path:
+   assert local_path==base_path or local_path.startswith(base_path+'/'),(path,ref,'outside site base path')
+   local_path=local_path[len(base_path):] or '/'
+  target=(dist/unquote(local_path.lstrip('/')))if local_path.startswith('/')else path.parent/unquote(local_path)
   if not u.path:target=path
   elif u.path.endswith('/'):target=target/'index.html'
   elif target.is_dir():target=target/'index.html'

@@ -1,8 +1,8 @@
 {
   "kind": "agl",
   "origins": {
-    "agl": "https://agl-website-1105-a93f.silkenapple4.chatgpt.site",
-    "personal": "https://akaalexey-portfolio-1105-a93f.silkenapple4.chatgpt.site"
+    "agl": "https://alexgamelab.ru",
+    "personal": "https://alexgamelab.ru/akaalexey"
   },
-  "production": false
+  "production": true
 }
