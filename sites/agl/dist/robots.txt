@@ -1,0 +1,3 @@
+User-agent: *
+Disallow: /
+Sitemap: https://agl-website-1105-a93f.silkenapple4.chatgpt.site/sitemap.xml
