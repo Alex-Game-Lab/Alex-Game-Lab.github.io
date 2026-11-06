@@ -35,7 +35,7 @@ for path in ROOT.rglob('*.html'):
     page = Page()
     page.feed(text)
     pages[path.resolve()] = page
-assert len(pages) == 8, len(pages)
+assert len(pages) == 14, len(pages)
 
 references = 0
 for path, page in pages.items():
@@ -60,7 +60,8 @@ for path, page in pages.items():
 for css in ROOT.rglob('*.css'):
     for ref in re.findall(r'url\([\'"]?([^\)\'"\s]+)', css.read_text()):
         if not urlsplit(ref).scheme:
-            assert (css.parent / ref).is_file(), (css, ref)
+            target = ROOT / ref.lstrip('/') if ref.startswith('/') else css.parent / ref
+            assert target.is_file(), (css, ref)
 for sitemap in ROOT.rglob('sitemap.xml'):
     for loc in ET.parse(sitemap).iter('{http://www.sitemaps.org/schemas/sitemap/0.9}loc'):
         url = urlsplit(loc.text)
