@@ -25,6 +25,7 @@ const state = {
   config: null,
   seq: 0,
   online: null,
+  renewing: null,
 };
 const titles = {
   news: "Новости",
@@ -137,10 +138,23 @@ async function api(
       throw Object.assign(new Error("authentication_required"), {
         code: "authentication_required",
       });
-    if (user.expired) {
+    if (
+      user.expired ||
+      (typeof user.expires_in === "number" && user.expires_in < 30)
+    ) {
       try {
-        user = await state.manager.signinSilent();
-        state.user = user;
+        if (!state.renewing) {
+          state.renewing = state.manager
+            .signinSilent()
+            .then((value) => {
+              state.user = value;
+              return value;
+            })
+            .finally(() => {
+              state.renewing = null;
+            });
+        }
+        user = await state.renewing;
       } catch {
         throw Object.assign(new Error("authentication_required"), {
           code: "authentication_required",
@@ -236,7 +250,7 @@ function manager(clientId) {
     scope: "openid profile email agl-api",
     userStore: new WebStorageStateStore({ store: new InMemoryWebStorage() }),
     stateStore: new WebStorageStateStore({ store: sessionStorage }),
-    automaticSilentRenew: true,
+    automaticSilentRenew: false,
     loadUserInfo: true,
     monitorSession: false,
     revokeTokensOnSignout: true,
@@ -530,6 +544,17 @@ async function projectsView() {
 async function projectView(id) {
   const row = await api("/projects/" + encodeURIComponent(id));
   const reviews = await api("/projects/" + encodeURIComponent(id) + "/reviews");
+  let ownReview = null;
+  if (state.user && can("reviews.create")) {
+    try {
+      ownReview = await api(
+        "/workspace/projects/" + encodeURIComponent(id) + "/review",
+        { private: true },
+      );
+    } catch (error) {
+      if (error.status !== 404) throw error;
+    }
+  }
   return [
     a("← Все проекты", "#projects", "back"),
     el(
@@ -561,11 +586,12 @@ async function projectView(id) {
         { class: "section-heading" },
         el("h2", {}, "Отзывы тестировщиков"),
         can("reviews.create") &&
-          button("Написать отзыв", () =>
+          button(ownReview ? "Изменить мой отзыв" : "Написать отзыв", () =>
             change(
               "Отзыв о проекте",
               [
                 field("Оценка", "rating", {
+                  value: String(ownReview?.rating || 5),
                   options: [
                     ["5", "5 — отлично"],
                     ["4", "4"],
@@ -575,6 +601,7 @@ async function projectView(id) {
                   ],
                 }),
                 field("Текст отзыва", "body", {
+                  value: ownReview?.body || "",
                   type: "textarea",
                   maxLength: 4000,
                 }),
@@ -588,7 +615,7 @@ async function projectView(id) {
                     body: {
                       rating: Number(v.rating),
                       body: v.body,
-                      expected_revision: 0,
+                      expected_revision: ownReview?.revision || 0,
                     },
                   },
                 ),
@@ -605,6 +632,24 @@ async function projectView(id) {
                 { class: "list-item" },
                 el("strong", {}, "★ " + x.rating + " · " + x.author),
                 el("p", { class: "plain-text" }, x.body),
+                can("reviews.moderate") &&
+                  button(
+                    "Удалить отзыв",
+                    () =>
+                      confirmAction(
+                        "Удалить отзыв?",
+                        "Действие будет записано в журнал.",
+                        () =>
+                          api(
+                            "/workspace/reviews/" +
+                              x.id +
+                              "?expected_revision=" +
+                              x.revision,
+                            { method: "DELETE", private: true },
+                          ),
+                      ),
+                    "text-button",
+                  ),
               ),
             ),
           )
