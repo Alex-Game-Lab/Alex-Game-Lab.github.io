@@ -32,8 +32,9 @@ def header():
         brand='<img src="/assets/logo.svg" width="42" height="42" alt=""><span class="brand-name">ALEX GAME LAB<small>НЕЗАВИСИМАЯ ИГРОВАЯ КОМАНДА</small></span>'
         items=[('games','Игры'),('studio','Студия'),('team','Команда'),('contact','Контакты')]
         theme=''
+    portal_nav=f'<a href="{AGL}/news/">Новости</a><a href="{AGL}/account/">AGL ID ↗</a>'
     nav=''.join(f'<a href="/#{id}">{label}</a>' for id,label in items)
-    return f'<a class="skip" href="#main">Перейти к содержимому</a><header class="site-header"><div class="header-inner shell"><a class="brand" href="/" aria-label="{"Алексей akaalexey" if IS_PERSONAL else "Alex Game Lab"} — главная">{brand}</a><nav class="navigation" id="navigation" data-navigation aria-label="Основная навигация">{nav}</nav><div class="header-actions"><a class="header-cta" href="{TG}">Написать ↗</a>{theme}<button class="icon-button menu-toggle" type="button" data-menu-toggle aria-controls="navigation" aria-expanded="false" aria-label="Открыть меню" hidden><span aria-hidden="true"><span></span><span></span></span></button></div></div></header>'
+    return f'<a class="skip" href="#main">Перейти к содержимому</a><header class="site-header"><div class="header-inner shell"><a class="brand" href="/" aria-label="{"Алексей akaalexey" if IS_PERSONAL else "Alex Game Lab"} — главная">{brand}</a><nav class="navigation" id="navigation" data-navigation aria-label="Основная навигация">{nav}{portal_nav}</nav><div class="header-actions"><a class="header-cta" href="{TG}">Написать ↗</a>{theme}<button class="icon-button menu-toggle" type="button" data-menu-toggle aria-controls="navigation" aria-expanded="false" aria-label="Открыть меню" hidden><span aria-hidden="true"><span></span><span></span></span></button></div></div></header>'
 
 def footer():
     if IS_PERSONAL:

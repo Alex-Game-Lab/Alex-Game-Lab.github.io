@@ -6,6 +6,7 @@ import shutil
 import subprocess
 import sys
 import xml.etree.ElementTree as ET
+from build_portal import build as build_portal
 
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT / '_site'
@@ -23,6 +24,7 @@ def main():
     shutil.copytree(ROOT / 'sites/agl/dist', OUTPUT)
     shutil.copytree(ROOT / 'sites/akaalexey/dist', OUTPUT / 'akaalexey')
     shutil.copy2(ROOT / 'CNAME', OUTPUT / 'CNAME')
+    build_portal(OUTPUT)
     namespace = 'http://www.sitemaps.org/schemas/sitemap/0.9'
     ET.register_namespace('', namespace)
     sitemap = ET.parse(OUTPUT / 'sitemap.xml')

@@ -1,0 +1,17 @@
+{
+  "name": "agl-portal-client",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "esbuild src/app.js --bundle --minify --format=esm --target=es2022 --outdir=../sites/agl/portal/assets --entry-names=portal --external:/assets/*",
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "oidc-client-ts": "3.5.0"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.12",
+    "linkedom": "0.18.15"
+  }
+}
