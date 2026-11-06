@@ -248,6 +248,7 @@ function manager(clientId) {
     post_logout_redirect_uri: location.origin + "/portal/",
     response_type: "code",
     scope: "openid profile email agl-api",
+    ui_locales: "ru",
     userStore: new WebStorageStateStore({ store: new InMemoryWebStorage() }),
     stateStore: new WebStorageStateStore({ store: sessionStorage }),
     automaticSilentRenew: false,
