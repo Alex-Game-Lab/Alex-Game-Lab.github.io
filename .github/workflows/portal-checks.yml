@@ -1,4 +1,4 @@
-name: Portal checks
+name: Vue client checks
 on:
   push:
   pull_request:
@@ -20,13 +20,13 @@ jobs:
       - name: Install pinned client dependencies
         working-directory: client
         run: npm ci --no-audit --no-fund
-      - name: Test rendered content, authentication boundaries and offline behavior
+      - name: Check small content and route helpers
         working-directory: client
         run: npm test
       - name: Verify checked-in bundle matches source
         working-directory: client
         run: |
           npm run build
-          git diff --exit-code -- ../sites/agl/portal/assets
+          git diff --exit-code -- ../sites/agl/vue-dist
       - name: Build and validate GitHub Pages artifact
         run: python3 tools/build_pages.py
