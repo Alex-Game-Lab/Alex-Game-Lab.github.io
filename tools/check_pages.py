@@ -35,7 +35,8 @@ for path in ROOT.rglob('*.html'):
     page = Page()
     page.feed(text)
     pages[path.resolve()] = page
-assert len(pages) == 14, len(pages)
+required = ("index.html", "about/index.html", "projects/index.html", "projects/rublemet/index.html", "news/index.html", "profile/index.html", "workspace/index.html", "workspace/articles/new/index.html", "workspace/roles/index.html", "auth/callback/index.html", "auth/silent/index.html", "games/rublemet/index.html", "privacy/index.html", "akaalexey/index.html")
+assert all((ROOT / name).resolve() in pages for name in required), "Missing required page"
 
 references = 0
 for path, page in pages.items():

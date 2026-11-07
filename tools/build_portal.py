@@ -1,22 +1,75 @@
-"""Add the prebuilt, dependency-free runtime portal to the GitHub Pages artifact."""
+"""Export the precompiled Vue portal into the existing GitHub Pages artifact."""
 from pathlib import Path
 import html
+import re
 import shutil
+import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1]
-PAGES = {'portal':'Пространство AGL','news':'Новости AGL','projects':'Проекты AGL','account':'Аккаунт AGL ID','workspace':'Рабочее пространство AGL','auth/callback':'Вход в AGL ID'}
+PAGES = {
+    '': ('Alex Game Lab — игры, идеи, люди', 'Независимая команда разработки игр. Проекты, новости и единый аккаунт AGL ID.'),
+    'projects': ('Проекты · Alex Game Lab', 'Игры и приложения Alex Game Lab. Знакомьтесь с проектами, следите за разработкой и делитесь впечатлениями.'),
+    'projects/rublemet': ('Рублемёт · Alex Game Lab', 'Рублемёт — игра о работе, деньгах и переменах. Игровые механики, история и новости проекта.'),
+    'about': ('О нас · Alex Game Lab', 'Что создаёт Alex Game Lab, как мы работаем и кто стоит за проектом.'),
+    'news': ('Новости · Alex Game Lab', 'Новости проектов, дневники разработки и статьи команды Alex Game Lab.'),
+    'profile': ('Профиль · AGL ID', 'Ваш профиль, облачные сохранения и доступ к проектам Alex Game Lab.'),
+    'account': ('Аккаунт · AGL ID', 'Вход и регистрация в едином аккаунте AGL ID.'),
+    'portal': ('Пространство · Alex Game Lab', 'Новости, проекты и аккаунт AGL ID.'),
+    'workspace': ('Рабочее пространство · AGL', 'Публикации, проекты и инструменты команды AGL.'),
+    'workspace/articles': ('Публикации · AGL', 'Статьи команды и черновики.'),
+    'workspace/articles/new': ('Новая статья · AGL', 'Редактор публикаций AGL.'),
+    'workspace/projects': ('Управление проектами · AGL', 'Настройки и участники проектов.'),
+    'workspace/roles': ('Роли и права · AGL', 'Роли команды и разрешения.'),
+    'workspace/users': ('Участники · AGL', 'Управление аккаунтами и персональными правами.'),
+    'workspace/reports': ('Тестирование · AGL', 'Закрытые отчёты о тестировании проектов.'),
+    'workspace/metrics': ('Игровые показатели · AGL', 'Метрики и управление игровыми показателями.'),
+    'workspace/audit': ('Журнал действий · AGL', 'История действий в рабочем пространстве.'),
+    'auth/callback': ('Завершаем вход · AGL ID', 'Возвращаемся в AGL ID после входа.'),
+    'auth/silent': ('AGL ID', 'Восстановление сессии AGL ID.'),
+}
+PUBLIC = {'', 'projects', 'projects/rublemet', 'about', 'news'}
 
 
 def build(output):
-    source = ROOT / 'sites/agl/portal/assets'
-    for file in ('portal.js','portal.css'):
-        if not (source / file).is_file():
-            raise RuntimeError('Run npm ci && npm run build in client before building Pages')
-    shutil.copytree(source, output / 'portal/assets', dirs_exist_ok=True)
-    for path,title in PAGES.items():
+    source = ROOT / 'sites/agl/vue-dist'
+    if not (source / 'index.html').is_file():
+        raise RuntimeError('Run npm ci && npm run build in client before building Pages')
+    # Keep legacy game, privacy and personal pages; replace only the portal shell.
+    shutil.copytree(source / 'app-assets', output / 'app-assets', dirs_exist_ok=True)
+    static = ROOT / 'sites/agl/static/assets'
+    if static.is_dir():
+        shutil.copytree(static, output / 'assets', dirs_exist_ok=True)
+    template = (source / 'index.html').read_text()
+    for path, (title, description) in PAGES.items():
+        private = path not in PUBLIC
+        page = re.sub(r'<title>.*?</title>', '<title>' + html.escape(title) + '</title>', template)
+        page = re.sub(r'(<meta name="description" content=")[^"]*', lambda m: m[1] + html.escape(description, quote=True), page)
+        page = re.sub(r'(<meta name="robots" content=")[^"]*', lambda m: m[1] + ('noindex,follow' if private else 'index,follow'), page)
+        canonical = 'https://alexgamelab.ru/' + (path + '/' if path else '')
+        page = re.sub(r'(<link rel="canonical" href=")[^"]*', lambda m: m[1] + canonical, page)
+        page = re.sub(r'(<meta property="og:title" content=")[^"]*', lambda m: m[1] + html.escape(title, quote=True), page)
+        page = re.sub(r'(<meta property="og:description" content=")[^"]*', lambda m: m[1] + html.escape(description, quote=True), page)
+        page = page.replace('</head>', '<meta property="og:url" content="' + canonical + '"></head>')
+        if path:
+            fallback = '<main id="main"><h1>' + html.escape(title) + '</h1><p>' + html.escape(description) + '</p><p>Для этого раздела нужен JavaScript.</p><nav><a href="/">Главная</a> · <a href="/projects/">Проекты</a> · <a href="/about/">О нас</a> · <a href="/games/rublemet/">Рублемёт</a></nav></main>'
+            page = re.sub(r'<div id="app">.*?</div>', lambda _: '<div id="app">' + fallback + '</div>', page, flags=re.S)
         base = output / path
         base.mkdir(parents=True, exist_ok=True)
-        robots = 'noindex,follow' if path in ('account','workspace','auth/callback','portal') else 'index,follow'
-        page='''<!doctype html><html lang="ru" data-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark light"><meta name="description" content="Новости, проекты и единый аккаунт Alex Game Lab."><meta name="robots" content="ROBOTS"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self'; connect-src 'self' https://api.alexgamelab.ru https://id.alexgamelab.ru; object-src 'none'; base-uri 'none'; form-action 'self' https://id.alexgamelab.ru; frame-src 'none'"><meta name="referrer" content="no-referrer"><title>TITLE</title><link rel="icon" href="/assets/logo.svg" type="image/svg+xml"><link rel="stylesheet" href="/portal/assets/portal.css"><script type="module" src="/portal/assets/portal.js"></script></head><body><a class="skip" href="#app">К содержимому</a><header class="site-header"><div class="header-inner shell"><a class="brand" href="/" aria-label="Alex Game Lab — главная"><img src="/assets/logo.svg" width="42" height="42" alt=""><span><strong>ALEX GAME LAB</strong><small>ИГРЫ. ИДЕИ. ЛЮДИ.</small></span></a><nav class="header-links" aria-label="Сайт AGL"><a href="/games/rublemet/">Рублемёт</a><a href="/akaalexey/">Основатель ↗</a><a href="https://t.me/akaAlexey">Связаться ↗</a></nav><div class="header-actions"><button type="button" id="theme" class="theme-button" aria-label="Включить светлую тему" aria-pressed="false">◐</button><button type="button" id="login" class="text-button">Войти</button></div></div></header><div class="shell"><div class="portal-bar"><span class="portal-label">ПРОСТРАНСТВО AGL</span><span class="connection" id="connection" role="status">Подключение к сервису…</span></div><nav class="portal-nav" id="portal-nav" aria-label="Разделы пространства"><a href="/news/">Новости</a><a href="/projects/">Проекты</a><a href="/account/">Аккаунт</a></nav><main id="app" tabindex="-1"><noscript><h1>Пространство AGL</h1><p>Для новостей, аккаунта и рабочего пространства нужен JavaScript. <a href="/games/rublemet/">Страница «Рублемёта»</a> и <a href="/akaalexey/">портфолио Алексея</a> доступны без него.</p></noscript></main></div><footer class="site-footer"><div class="footer-inner shell"><span>© Alex Game Lab · Создаём шаг за шагом.</span><div><a href="/">Главная</a><a href="/privacy/">Данные и конфиденциальность</a><a href="https://t.me/akaAlexey">Telegram ↗</a></div></div></footer><div id="notices" aria-live="polite"></div></body></html>'''
-        page=page.replace('TITLE',html.escape(title)).replace('ROBOTS',robots)
-        (base/'index.html').write_text(page)
+        (base / 'index.html').write_text(page)
+    # GitHub Pages has no rewrites: fixed routes have real index files; new article,
+    # project and editor links return through a bounded same-origin restoration.
+    restore = """const p=location.pathname;if(/^\\/(projects|news|workspace)\\//.test(p)&&p.length<1024&&!p.includes('\\\\'))location.replace('/?agl_path='+encodeURIComponent(p+location.search+location.hash));"""
+    (output / 'app-assets/route-restore.js').write_text(restore)
+    not_found = re.sub(r'<title>.*?</title>', '<title>Страница не найдена · AGL</title>', template)
+    not_found = not_found.replace('content="index,follow"', 'content="noindex,nofollow"')
+    not_found = not_found.replace('</head>', '<script src="/app-assets/route-restore.js"></script></head>')
+    (output / '404.html').write_text(not_found)
+    namespace = 'http://www.sitemaps.org/schemas/sitemap/0.9'
+    sitemap = ET.parse(output / 'sitemap.xml')
+    existing = {x.text for x in sitemap.iter('{' + namespace + '}loc')}
+    for path in sorted(PUBLIC):
+        loc = 'https://alexgamelab.ru/' + (path + '/' if path else '')
+        if loc not in existing:
+            entry = ET.SubElement(sitemap.getroot(), '{' + namespace + '}url')
+            ET.SubElement(entry, '{' + namespace + '}loc').text = loc
+    sitemap.write(output / 'sitemap.xml', encoding='UTF-8', xml_declaration=True)

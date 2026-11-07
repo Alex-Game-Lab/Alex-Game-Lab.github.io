@@ -33,6 +33,11 @@ def main():
     sitemap.write(OUTPUT / 'sitemap.xml', encoding='UTF-8', xml_declaration=True)
     subprocess.run([sys.executable, str(ROOT / 'tools/check_pages.py')], check=True)
     if args.sync_root:
+        # Remove stale hashed chunks from the branch export, not user source.
+        for relative in ("app-assets", "portal/assets"):
+            old = ROOT / relative
+            if old.is_dir():
+                shutil.rmtree(old)
         shutil.copytree(OUTPUT, ROOT, dirs_exist_ok=True)
     print(f'GitHub Pages artifact: {OUTPUT}')
 

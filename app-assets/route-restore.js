@@ -1,0 +1,1 @@
+const p=location.pathname;if(/^\/(projects|news|workspace)\//.test(p)&&p.length<1024&&!p.includes('\\'))location.replace('/?agl_path='+encodeURIComponent(p+location.search+location.hash));
