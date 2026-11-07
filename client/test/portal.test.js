@@ -5,7 +5,7 @@ import vm from 'node:vm';
 import {parseHTML} from 'linkedom';
 import {configIsTrusted, ISSUER, COVERS, route} from '../src/safety.js';
 
-const sdk=`export class WebStorageStateStore {constructor(){}};export class InMemoryWebStorage{};export class UserManager{constructor(){} async signinRedirectCallback(){return globalThis.__fixtureUser} async removeUser(){} async signinSilent(){globalThis.__renewCalls++;return {...globalThis.__fixtureUser,access_token:"fixture-renewed-token",expired:false,expires_in:300}}}`;
+const sdk=`export class WebStorageStateStore {constructor(){}};export class InMemoryWebStorage{};export class UserManager{constructor(options){this.options=options} async signinRedirect(args){globalThis.__loginRequests.push({...args,client_id:this.options.client_id})} async signinRedirectCallback(){return globalThis.__fixtureUser} async removeUser(){} async signinSilent(){globalThis.__renewCalls++;return {...globalThis.__fixtureUser,access_token:"fixture-renewed-token",expired:false,expires_in:300}}}`;
 
 // Bundle the actual production source, replacing only the external identity transport in the test harness.
 const source=fs.readFileSync('src/app.js','utf8').replace('from "oidc-client-ts"','from "./test-sdk.js"');
@@ -17,9 +17,9 @@ async function render({hash='#news',responses={},authenticated=false,access={},e
  const location={origin:'https://alexgamelab.ru',pathname:authenticated?'/auth/callback/':'/portal/',hash,href:'https://alexgamelab.ru/auth/callback/?code=fixture&state=fixture'};
  const session=storage();if(authenticated)session.setItem('agl.login.client','agl-web');
  const calls=[];
- const context=vm.createContext({window,document:window.document,Node:window.Node,location,history:{replaceState(_a,_b,target){location.pathname='/portal/';location.hash=target.slice(target.indexOf('#'));}},localStorage:storage(),sessionStorage:session,AbortController,Intl,URL,console,setTimeout:()=>1,clearTimeout(){},__renewCalls:0,__fixtureUser:{access_token:'fixture-only-token',expired,expires_in:expired?0:300,state:{route:hash}},fetch:async(url,options)=>{calls.push({url,options});const path=url.replace('https://api.alexgamelab.ru/v1','');const defaults={'/me/access':{owner:false,account_id:'fixture-user',roles:[],permissions:[],projects:[],restrictions:[],...access},'/me':{display_name:'Тест',locale:'ru'},'/games':[]};if(!(path in responses)&&!(path in defaults))throw Error('offline');return {ok:true,status:200,json:async()=>responses[path]??defaults[path]};}});
+ const context=vm.createContext({window,document:window.document,Node:window.Node,location,history:{replaceState(_a,_b,target){location.pathname='/portal/';location.hash=target.slice(target.indexOf('#'));}},localStorage:storage(),sessionStorage:session,AbortController,Intl,URL,console,setTimeout:()=>1,clearTimeout(){},__renewCalls:0,__loginRequests:[],__fixtureUser:{access_token:'fixture-only-token',expired,expires_in:expired?0:300,state:{route:hash}},fetch:async(url,options)=>{calls.push({url,options});const path=url.replace('https://api.alexgamelab.ru/v1','');const defaults={'/me/access':{owner:false,account_id:'fixture-user',roles:[],permissions:[],projects:[],restrictions:[],...access},'/me':{display_name:'Тест',locale:'ru'},'/games':[], '/auth/config':{issuer:ISSUER,client_id:'agl-web',console_client_id:'agl-console',pkce:'S256'}};if(!(path in responses)&&!(path in defaults))throw Error('offline');return {ok:true,status:200,json:async()=>responses[path]??defaults[path]};}});
  vm.runInContext(harness,context);for(let i=0;i<12;i++)await new Promise(setImmediate);
- return {document:window.document,calls,renewals:context.__renewCalls};
+ return {document:window.document,calls,loginRequests:context.__loginRequests,renewals:context.__renewCalls};
 }
 
 test('Only pinned issuer and clients are accepted; external cover URLs are excluded',()=>{
@@ -61,4 +61,25 @@ test('Existing own review opens edit behavior rather than an impossible second c
  '/projects/rublemet/reviews':{items:[]},'/workspace/projects/rublemet/review':{id:'fixture-review',rating:4,body:'Мой отзыв',revision:2}
  }});
  assert.match(document.querySelector('#app').textContent,/Изменить мой отзыв/);
+});
+
+
+test('Registration button starts the standard create prompt with PKCE client, without collecting a password on Pages',async()=>{
+ const {document,loginRequests}=await render({hash:'#account'});
+ const create=[...document.querySelectorAll('button')].find(x=>x.textContent==='Создать аккаунт');
+ assert.ok(create);assert.equal(document.querySelector('input[type=password]'),null);
+ create.dispatchEvent(new document.defaultView.Event('click'));
+ for(let i=0;i<12;i++)await new Promise(setImmediate);
+ assert.equal(loginRequests.length,1);assert.equal(loginRequests[0].prompt,'create');
+ assert.equal(loginRequests[0].client_id,'agl-web');assert.equal(loginRequests[0].state.route,'#account');
+});
+
+test('Regular sign-in does not ask for staff MFA or registration and keeps a separate create button',async()=>{
+ const {document,loginRequests}=await render({hash:'#account'});
+ const login=[...document.querySelectorAll('#app button')].find(x=>x.textContent==='Войти');
+ login.dispatchEvent(new document.defaultView.Event('click'));
+ for(let i=0;i<12;i++)await new Promise(setImmediate);
+ assert.equal(loginRequests.length,1);assert.equal(loginRequests[0].client_id,'agl-web');
+ assert.equal(loginRequests[0].prompt,undefined);assert.equal(loginRequests[0].extraQueryParams,undefined);
+ assert.doesNotMatch(document.querySelector('#app').textContent,/Регистрация откроется/);
 });
