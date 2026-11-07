@@ -901,3 +901,5 @@ pre {
     scroll-behavior: auto !important;
   }
 }
+.auth-entry-actions{display:flex;flex-wrap:wrap;gap:12px;margin:24px 0 16px}.account-security{margin:24px 0}.account-intro .small{max-width:55ch}
+[data-view="account"] .page-heading h1{font-size:clamp(2rem,4vw,3.5rem);max-width:24ch}[data-view="account"] .page-heading{margin-bottom:32px}.auth-entry-actions .button{margin-top:0}.account-intro img{max-height:340px;object-fit:cover}

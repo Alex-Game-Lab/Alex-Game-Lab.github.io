@@ -238,7 +238,7 @@ function navigation() {
       a(label, "#" + name, current === name ? "active" : ""),
     ),
   );
-  loginButton.textContent = state.user ? "Выйти ↗" : "Войти в AGL ID ↗";
+  loginButton.textContent = state.user ? "Выйти" : "Войти";
 }
 function manager(clientId) {
   return new UserManager({
@@ -257,7 +257,7 @@ function manager(clientId) {
     revokeTokensOnSignout: true,
   });
 }
-async function signIn(staff = false) {
+async function signIn(staff = false, mode = "login") {
   try {
     if (!state.config) {
       const value = await api("/auth/config");
@@ -271,6 +271,10 @@ async function signIn(staff = false) {
     await m.signinRedirect({
       state: { route: location.hash || "#account" },
       ...(staff ? { prompt: "login", max_age: 0 } : {}),
+      ...(mode === "register" ? { prompt: "create" } : {}),
+      ...(["agl-link-phone", "UPDATE_PASSWORD"].includes(mode)
+        ? { prompt: "login", max_age: 0, extraQueryParams: { kc_action: mode } }
+        : {}),
     });
   } catch {
     toast(
@@ -685,8 +689,8 @@ async function accountView() {
     return [
       heading(
         "AGL ID",
-        "Один аккаунт. Свои миры.",
-        "Профиль, игровые сохранения и доступ к проектам команды.",
+        "Один аккаунт для всей AGL",
+        "Твой профиль на сайте и в подключённых играх.",
       ),
       el(
         "section",
@@ -695,28 +699,44 @@ async function accountView() {
           "div",
           {},
           chip("Единый вход"),
-          el("h2", {}, "Возвращайся к своим историям."),
+          el("h2", {}, "С возвращением"),
           el(
             "p",
             {},
-            "Вход через AGL ID свяжет твой профиль на сайте и в подключённых играх. Пароль вводится на странице сервиса входа.",
+            "Войди по нику или почте и паролю. Если ты здесь впервые, создай аккаунт — нужны только ник и пароль.",
           ),
-          button("Войти в AGL ID ↗", () => signIn()),
+          el("div", { class: "auth-entry-actions" },
+            button("Войти", () => signIn()),
+            button("Создать аккаунт", () => signIn(false, "register"), "button secondary"),
+          ),
+          el("p", { class: "muted small" }, "Почта при регистрации необязательна. Приложение с кодами для обычного входа настраивать не нужно."),
         ),
         image("rublemet"),
       ),
       el(
         "p",
         { class: "muted" },
-        "Регистрация откроется после настройки подтверждения электронной почты.",
+        "Не получается войти? Напиши @akaAlexey в Telegram — поможем восстановить доступ.",
       ),
     ];
-  const games = await api("/games");
+  const [games, phone] = await Promise.all([
+    api("/games"), api("/me/phone", { private: true }).catch(() => null),
+  ]);
   return [
     heading(
       "ЛИЧНЫЙ КАБИНЕТ",
       state.profile.display_name || "Добро пожаловать.",
       "Здесь твой профиль и данные подключённых игр.",
+    ),
+    el("section", { class: "panel account-security" },
+      el("h2", {}, "Вход в аккаунт"),
+      el("p", {}, phone?.linked ? "Телефон подтверждён: " + phone.masked_phone :
+        phone?.enabled ? "Привяжи телефон, чтобы входить по SMS в этот же аккаунт." :
+        "Вход по SMS появится после подключения сервиса отправки кодов. Сейчас работает вход по нику или почте и паролю."),
+      el("div", { class: "auth-entry-actions" },
+        button("Изменить пароль", () => signIn(false, "UPDATE_PASSWORD"), "button secondary"),
+        phone?.enabled && !phone.linked && button("Привязать телефон", () => signIn(false, "agl-link-phone"), "button secondary"),
+      ),
     ),
     el(
       "div",
@@ -1836,6 +1856,7 @@ async function auditView() {
 async function render() {
   const seq = ++state.seq;
   const { name, id } = route(location.hash, location.pathname);
+  root.dataset.view = name;
   navigation();
   document.title = (titles[name] || "Alex Game Lab") + " · AGL";
   root.setAttribute("aria-busy", "true");
@@ -1955,8 +1976,13 @@ async function start() {
       history.replaceState(null, "", "/portal/" + target);
       await refreshAccess();
     } catch {
+      await state.manager?.removeUser();
+      state.user = null;
+      state.access = null;
+      state.profile = null;
+      sessionStorage.removeItem("agl.login.client");
       history.replaceState(null, "", "/portal/#account");
-      toast("Не удалось завершить вход. Начни его заново.", true);
+      toast("Вход не завершён. Нажми «Войти» и попробуй ещё раз. Если это повторяется, напиши @akaAlexey.", true);
     }
   }
   await render();
