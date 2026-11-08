@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import PageLink from "../components/PageLink.vue";
 import { useRoute } from "vue-router";
 import { watch } from "vue";
 import { api } from "../lib/api";
@@ -26,8 +27,8 @@ async function share() {
 </script>
 <template>
   <div class="container page-container">
-    <RouterLink to="/news/" class="back-link"
-      ><Icon name="back" :size="17" />Все публикации</RouterLink
+    <PageLink to="/news/" class="back-link"
+      ><Icon name="back" :size="17" />Все публикации</PageLink
     ><LoadState :loading="loading" :error="error" @retry="reload"
       ><article v-if="data" class="article-page">
         <header>
@@ -57,16 +58,16 @@ async function share() {
           height="720"
         /><MarkdownContent :body="data.body" :format="data.format || 'plain'" />
         <div class="article-end">
-          <RouterLink
+          <PageLink
             v-if="data.project_slug"
             :to="'/projects/' + data.project_slug + '/'"
             class="button secondary"
-            >О проекте<Icon name="out" /></RouterLink
-          ><RouterLink
+            >О проекте<Icon name="out" /></PageLink
+          ><PageLink
             v-if="auth.user && (auth.access?.owner || can('articles.edit_any'))"
             :to="'/workspace/articles/' + data.id + '/'"
             class="inline-link"
-            ><Icon name="edit" :size="17" />Редактировать</RouterLink
+            ><Icon name="edit" :size="17" />Редактировать</PageLink
           ><button class="inline-link" @click="share">
             <Icon name="copy" :size="17" />Поделиться
           </button>

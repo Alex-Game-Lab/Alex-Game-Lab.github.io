@@ -2,7 +2,7 @@
 import { ref, reactive, computed, watch } from "vue";
 import { api } from "../lib/api";
 import { resource } from "../lib/resource";
-import { auth, can, freshPassword, refreshAccess } from "../stores/auth";
+import { auth, can, refreshAccess } from "../stores/auth";
 import { notify } from "../stores/notices";
 import { errorMessage } from "../lib/errors";
 import { permissionGroups } from "../lib/content";
@@ -12,7 +12,6 @@ import type { Role, Permission, Page } from "../lib/types";
 import Icon from "../components/Icon.vue";
 import Modal from "../components/Modal.vue";
 import LoadState from "../components/LoadState.vue";
-import ConfirmationBanner from "../components/ConfirmationBanner.vue";
 const { data, loading, error, reload } = resource(async () => {
   const [roles, permissions] = await Promise.all([
     api<Page<Role> & { delegable_permissions: string[] }>("/staff/roles", {
@@ -142,7 +141,6 @@ function toggleGroup(permissions: Permission[]) {
     : Array.from(new Set([...form.permissions, ...eligible]));
 }
 async function save() {
-  if (!freshPassword.value) return;
   busy.value = true;
   try {
     const payload = {
@@ -169,7 +167,7 @@ async function save() {
   }
 }
 async function remove() {
-  if (!removing.value || !freshPassword.value) return;
+  if (!removing.value) return;
   busy.value = true;
   try {
     await api("/staff/roles/" + removing.value.slug, {
@@ -202,7 +200,7 @@ async function remove() {
         <Icon name="plus" :size="18" />Создать роль
       </button>
     </header>
-    <ConfirmationBanner v-if="!editorOpen" />
+    
     <div class="catalog-tools">
       <span class="small muted"
         >{{ data?.roles.length ?? 0 }} ролей в команде</span
@@ -316,7 +314,7 @@ async function remove() {
       wide
       :busy="busy"
       ><form class="role-editor" @submit.prevent="save">
-        <ConfirmationBanner @prepare="remember" />
+        
         <div class="role-basic-fields">
           <label
             >Название<input
@@ -442,7 +440,7 @@ async function remove() {
               <b class="danger-text">−{{ diff.removed.length }}</b> убрано</span
             >
           </div>
-          <button class="button" :disabled="busy || !freshPassword">
+          <button class="button" :disabled="busy">
             {{
               busy ? "Сохраняем…" : editing ? "Сохранить роль" : "Создать роль"
             }}<Icon name="check" :size="17" />
@@ -458,11 +456,11 @@ async function remove() {
         Роль «{{ removing?.title }}» будет удалена. Назначенные и системные роли
         удалить нельзя.
       </p>
-      <ConfirmationBanner />
+      
       <div class="button-row">
         <button
           class="button danger"
-          :disabled="busy || !freshPassword"
+          :disabled="busy"
           @click="remove"
         >
           Удалить роль</button

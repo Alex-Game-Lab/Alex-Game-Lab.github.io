@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import PageLink from "../components/PageLink.vue";
 import { ref, reactive, watch, computed } from "vue";
 import {
   auth,
@@ -186,12 +187,12 @@ async function showSaves(game: Game) {
             </div>
           </div>
         </div>
-        <RouterLink
+        <PageLink
           v-if="hasWorkspace"
           to="/workspace/"
           class="button secondary"
           >Рабочее пространство<Icon name="out"
-        /></RouterLink>
+        /></PageLink>
       </header>
       <div
         v-for="restriction in auth.access?.restrictions"

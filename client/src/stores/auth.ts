@@ -1,4 +1,4 @@
-import { reactive, computed, ref } from "vue";
+import { reactive, computed } from "vue";
 import {
   UserManager,
   User,
@@ -77,20 +77,6 @@ export const hasWorkspace = computed(
     !!auth.user &&
     (auth.access?.owner || teamPermissions.some((p) => canSome(p))),
 );
-const clock = ref(Date.now());
-const clockTimer = setInterval(() => (clock.value = Date.now()), 15000);
-if (import.meta.hot) import.meta.hot.dispose(() => clearInterval(clockTimer));
-export const freshPassword = computed(() => {
-  const p = auth.user?.profile;
-  return (
-    !!p &&
-    current?.settings.client_id === "agl-console" &&
-    Array.isArray(p.amr) &&
-    p.amr.includes("pwd") &&
-    typeof p.auth_time === "number" &&
-    clock.value / 1000 - p.auth_time < 300
-  );
-});
 export async function accessToken() {
   if (!auth.user) throw new ApiError("authentication_required", 401);
   if (auth.user.expired || (auth.user.expires_in ?? 0) < 30) {
@@ -127,17 +113,16 @@ export async function refreshAccess() {
   auth.profile = profile;
 }
 export async function login(
-  mode: "login" | "register" | "confirm" | "password" | "phone" = "login",
+  mode: "login" | "register" | "password" | "phone" = "login",
 ) {
   try {
-    const consoleMode = mode === "confirm";
-    const client = consoleMode ? "agl-console" : "agl-web";
+    const client = "agl-web";
     sessionStorage.setItem("agl.login.client", client);
     const m = makeManager(client);
     await m.signinRedirect({
       state: { returnTo: location.pathname + location.search + location.hash },
       ...(mode === "register" ? { prompt: "create" } : {}),
-      ...(["confirm", "password", "phone"].includes(mode)
+      ...(["password", "phone"].includes(mode)
         ? { prompt: "login", max_age: 0 }
         : {}),
       ...(mode === "password"

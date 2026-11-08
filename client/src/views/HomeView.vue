@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import PageLink from "../components/PageLink.vue";
 import { api } from "../lib/api";
 import { resource } from "../lib/resource";
 import type { Page, Project, Article } from "../lib/types";
@@ -21,15 +22,15 @@ const news = resource(() => api<Page<Article>>("/news?limit=3"));
           хочется остаться.
         </p>
         <div class="button-row">
-          <RouterLink to="/projects/" class="button"
-            >Исследовать проекты<Icon name="out" /></RouterLink
-          ><RouterLink to="/about/" class="button ghost"
+          <PageLink to="/projects/" class="button"
+            >Исследовать проекты<Icon name="out" /></PageLink
+          ><PageLink to="/about/" class="button ghost"
             >Знакомство с AGL<Icon name="arrow" :size="17"
-          /></RouterLink>
+          /></PageLink>
         </div>
         <div class="hero-bottom">
           <span class="hero-index">01 / ALEX GAME LAB</span
-          ><a href="#games" class="scroll-link"
+          ><a href="/projects/" class="scroll-link"
             >Листай дальше<Icon name="down" :size="16"
           /></a>
         </div>
@@ -67,9 +68,9 @@ const news = resource(() => api<Page<Article>>("/news?limit=3"));
           <span class="eyebrow">01 / ПРОЕКТЫ</span>
           <h2>Идеи, которым<br />мы даём жизнь<span class="accent">.</span></h2>
         </div>
-        <RouterLink to="/projects/" class="inline-link"
+        <PageLink to="/projects/" class="inline-link"
           >Все проекты<Icon name="out"
-        /></RouterLink>
+        /></PageLink>
       </div>
       <div
         v-if="projects.data.value?.items.length"
@@ -113,9 +114,9 @@ const news = resource(() => api<Page<Article>>("/news?limit=3"));
             Дальше — прототип, код, история и десятки маленьких решений, из
             которых складывается игра.
           </p>
-          <RouterLink to="/about/" class="button secondary"
+          <PageLink to="/about/" class="button secondary"
             >Как мы работаем<Icon name="out"
-          /></RouterLink>
+          /></PageLink>
         </div>
         <div class="approach-list">
           <article>
@@ -160,9 +161,9 @@ const news = resource(() => api<Page<Article>>("/news?limit=3"));
           <span class="eyebrow">03 / ДНЕВНИК КОМАНДЫ</span>
           <h2>Что происходит<br />за кулисами<span class="accent">.</span></h2>
         </div>
-        <RouterLink to="/news/" class="inline-link"
+        <PageLink to="/news/" class="inline-link"
           >Все публикации<Icon name="out"
-        /></RouterLink>
+        /></PageLink>
       </div>
       <div v-if="news.data.value?.items.length" class="news-grid">
         <ArticleCard
@@ -180,9 +181,9 @@ const news = resource(() => api<Page<Article>>("/news?limit=3"));
             дневнике.
           </p>
         </div>
-        <RouterLink to="/news/" class="round-arrow"
+        <PageLink to="/news/" class="round-arrow"
           ><Icon name="out"
-        /></RouterLink>
+        /></PageLink>
       </div>
     </section>
     <section id="team" class="founder-teaser container">
@@ -200,7 +201,7 @@ const news = resource(() => api<Page<Article>>("/news?limit=3"));
         <h2>Привет, я Алексей.</h2>
         <p>Основатель Alex Game Lab, разработчик и руководитель проектов.</p>
       </div>
-      <a href="/akaalexey/" class="inline-link"
+      <a href="https://akaalexey.ru/" class="inline-link"
         >Личное знакомство<Icon name="out"
       /></a>
     </section>

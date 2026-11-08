@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import PageLink from "../components/PageLink.vue";
 import Icon from "../components/Icon.vue";
 </script>
 <template>
@@ -9,8 +10,8 @@ import Icon from "../components/Icon.vue";
     >
     <h1>Здесь пока<br />нет этого мира.</h1>
     <p>Похоже, страница переместилась или ссылка оказалась неточной.</p>
-    <RouterLink to="/" class="button"
+    <PageLink to="/" class="button"
       >На главную<Icon name="arrow"
-    /></RouterLink>
+    /></PageLink>
   </div>
 </template>

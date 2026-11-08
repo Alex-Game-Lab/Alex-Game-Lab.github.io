@@ -1,13 +1,12 @@
 <script setup lang="ts">
 import { ref, reactive, watch } from "vue";
 import { api } from "../lib/api";
-import { auth, can, canSome, freshPassword } from "../stores/auth";
+import { auth, can, canSome } from "../stores/auth";
 import { notify } from "../stores/notices";
 import { errorMessage } from "../lib/errors";
 import { saveDraft, readDraft, removeDraft } from "../lib/drafts";
 import type { Game, Page, UserSummary, Stats } from "../lib/types";
 import Icon from "../components/Icon.vue";
-import ConfirmationBanner from "../components/ConfirmationBanner.vue";
 import LoadState from "../components/LoadState.vue";
 import Modal from "../components/Modal.vue";
 const games = ref<Game[]>([]),
@@ -70,7 +69,7 @@ async function readStats() {
   }
 }
 async function adjust() {
-  if (!freshPassword.value || !account.value) return;
+  if (!account.value) return;
   if (
     !Number.isSafeInteger(form.balance_delta) ||
     metricRows.value.some((r) => !r.key || !Number.isSafeInteger(r.value))
@@ -238,7 +237,7 @@ if (restored) {
       title="Изменить игровые показатели"
       wide
       :busy="busy"
-      ><ConfirmationBanner @prepare="preserveAdjustment" />
+      >
       <form class="form-stack" @submit.prevent="adjust">
         <div class="notice">
           <Icon name="user" />
@@ -302,7 +301,7 @@ if (restored) {
         <p class="small muted">
           Операция и причина сохранятся в журнале действий.
         </p>
-        <button class="button" :disabled="busy || !freshPassword">
+        <button class="button" :disabled="busy">
           Применить изменения<Icon name="check" :size="17" />
         </button></form
     ></Modal>

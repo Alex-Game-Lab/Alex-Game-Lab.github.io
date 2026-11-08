@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import PageLink from "./components/PageLink.vue";
 import { ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import { auth, hasWorkspace, login, logout } from "./stores/auth";
@@ -31,18 +32,18 @@ const links = [
   <a class="skip-link" href="#main">К содержимому</a>
   <header class="site-header">
     <div class="container header-inner">
-      <RouterLink to="/" class="wordmark" aria-label="Alex Game Lab — главная"
+      <PageLink to="/" class="wordmark" aria-label="Alex Game Lab — главная"
         ><img src="/assets/logo.svg" alt="" width="39" height="39" /><span
           >ALEX GAME LAB<small>ИГРЫ. ИДЕИ. ЛЮДИ.</small></span
-        ></RouterLink
+        ></PageLink
       >
       <nav class="desktop-nav" aria-label="Главная навигация">
-        <RouterLink v-for="[path, label] in links" :key="path" :to="path">{{
+        <PageLink v-for="[path, label] in links" :key="path" :to="path">{{
           label
-        }}</RouterLink
-        ><RouterLink v-if="hasWorkspace" to="/workspace/"
+        }}</PageLink
+        ><PageLink v-if="hasWorkspace" to="/workspace/"
           >Пространство<Icon name="out" :size="13"
-        /></RouterLink>
+        /></PageLink>
       </nav>
       <div class="header-actions">
         <button
@@ -56,11 +57,11 @@ const links = [
           "
         >
           <Icon :name="theme === 'dark' ? 'sun' : 'moon'" :size="18" /></button
-        ><RouterLink v-if="auth.user" to="/profile/" class="profile-link"
+        ><PageLink v-if="auth.user" to="/profile/" class="profile-link"
           ><span class="avatar tiny"><Icon name="user" :size="17" /></span
           ><span>{{
             auth.profile?.display_name || "Профиль"
-          }}</span></RouterLink
+          }}</span></PageLink
         ><button v-else class="header-login" @click="login()">
           Войти<Icon name="out" :size="16" /></button
         ><button
@@ -80,34 +81,31 @@ const links = [
       class="mobile-nav container"
       aria-label="Мобильная навигация"
     >
-      <RouterLink v-for="[path, label] in links" :key="path" :to="path"
-        >{{ label }}<Icon name="out" /></RouterLink
-      ><RouterLink to="/profile/">Профиль<Icon name="user" /></RouterLink
-      ><RouterLink v-if="hasWorkspace" to="/workspace/"
+      <PageLink v-for="[path, label] in links" :key="path" :to="path"
+        >{{ label }}<Icon name="out" /></PageLink
+      ><PageLink to="/profile/">Профиль<Icon name="user" /></PageLink
+      ><PageLink v-if="hasWorkspace" to="/workspace/"
         >Рабочее пространство<Icon name="dashboard"
-      /></RouterLink>
+      /></PageLink>
     </nav>
   </header>
   <main id="main" tabindex="-1">
-    <RouterView v-slot="{ Component }"
-      ><Transition name="page" mode="out-in"
-        ><component :is="Component" /></Transition
-    ></RouterView>
+    <RouterView />
   </main>
   <footer class="site-footer">
     <div class="container">
       <div class="footer-top">
         <div>
-          <RouterLink to="/" class="footer-brand"
-            >ALEX GAME LAB<span aria-hidden="true">✳</span></RouterLink
+          <PageLink to="/" class="footer-brand"
+            >ALEX GAME LAB<span aria-hidden="true">✳</span></PageLink
           >
           <p>Любопытство превращается в идеи.<br />Идеи — в игры.</p>
         </div>
         <div class="footer-column">
           <span>Исследовать</span
-          ><RouterLink to="/projects/">Проекты</RouterLink
-          ><RouterLink to="/news/">Новости</RouterLink
-          ><RouterLink to="/about/">О команде</RouterLink>
+          ><PageLink to="/projects/">Проекты</PageLink
+          ><PageLink to="/news/">Новости</PageLink
+          ><PageLink to="/about/">О команде</PageLink>
         </div>
         <div class="footer-column">
           <span>На связи</span
@@ -118,15 +116,15 @@ const links = [
             target="_blank"
             rel="noopener"
             >GitHub<Icon name="out" :size="14" /></a
-          ><a href="/akaalexey/"
+          ><a href="https://akaalexey.ru/"
             >Алексей · akaalexey<Icon name="out" :size="14"
           /></a>
         </div>
         <div class="footer-column">
           <span>Твоё пространство</span
-          ><RouterLink to="/profile/">Аккаунт AGL ID</RouterLink
-          ><RouterLink v-if="hasWorkspace" to="/workspace/"
-            >Рабочее пространство</RouterLink
+          ><PageLink to="/profile/">Аккаунт AGL ID</PageLink
+          ><PageLink v-if="hasWorkspace" to="/workspace/"
+            >Рабочее пространство</PageLink
           ><a href="/privacy/">Конфиденциальность</a
           ><button v-if="auth.user" class="text-button" @click="logout">
             Выйти из аккаунта

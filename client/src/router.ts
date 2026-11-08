@@ -28,7 +28,7 @@ if (location.pathname === "/portal/" && location.hash) {
 export const router = createRouter({
   history: createWebHistory(),
   scrollBehavior(to, from, saved) {
-    if (saved) return saved;
+    if (saved) return { ...saved, behavior: "instant" };
     if (to.hash)
       return {
         el: to.hash,
@@ -37,7 +37,7 @@ export const router = createRouter({
           ? "instant"
           : "smooth",
       };
-    return { top: 0 };
+    return { top: 0, left: 0, behavior: "instant" };
   },
   routes: [
     {

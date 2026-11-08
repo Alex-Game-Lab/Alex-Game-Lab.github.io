@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import PageLink from "../components/PageLink.vue";
 import { ref, watch } from "vue";
 import { api } from "../lib/api";
 import { resource } from "../lib/resource";
@@ -88,11 +89,11 @@ async function remove() {
         <h1>Публикации<span class="accent">.</span></h1>
         <p>От первой мысли в черновике до истории на сайте.</p>
       </div>
-      <RouterLink
+      <PageLink
         v-if="canSome('articles.create')"
         to="/workspace/articles/new/"
         class="button"
-        ><Icon name="plus" :size="17" />Написать статью</RouterLink
+        ><Icon name="plus" :size="17" />Написать статью</PageLink
       >
     </header>
     <div class="catalog-tools">
@@ -143,10 +144,10 @@ async function remove() {
               >
             </div>
             <h3>
-              <RouterLink
+              <PageLink
                 v-if="editable(article)"
                 :to="'/workspace/articles/' + article.id + '/'"
-                >{{ article.title }}</RouterLink
+                >{{ article.title }}</PageLink
               ><span v-else>{{ article.title }}</span>
             </h3>
             <p>
@@ -155,18 +156,18 @@ async function remove() {
             </p>
           </div>
           <div class="row-actions">
-            <RouterLink
+            <PageLink
               v-if="article.status === 'published'"
               :to="'/news/' + article.slug + '/'"
               class="icon-button"
               :aria-label="'Открыть статью ' + article.title"
-              ><Icon name="out" :size="18" /></RouterLink
-            ><RouterLink
+              ><Icon name="out" :size="18" /></PageLink
+            ><PageLink
               v-if="editable(article)"
               :to="'/workspace/articles/' + article.id + '/'"
               class="icon-button"
               :aria-label="'Редактировать ' + article.title"
-              ><Icon name="edit" :size="18" /></RouterLink
+              ><Icon name="edit" :size="18" /></PageLink
             ><button
               v-if="deletable(article)"
               class="icon-button danger-text"
@@ -191,11 +192,11 @@ async function remove() {
             : 'Начни с черновика. Добавь заголовок, историю и иллюстрацию — остальное подхватит редактор.'
         "
         icon="article"
-        ><RouterLink
+        ><PageLink
           v-if="canSome('articles.create')"
           to="/workspace/articles/new/"
           class="button"
-          ><Icon name="plus" :size="17" />Первая статья</RouterLink
+          ><Icon name="plus" :size="17" />Первая статья</PageLink
         ></EmptyState
       ><Pagination
         :offset="offset"

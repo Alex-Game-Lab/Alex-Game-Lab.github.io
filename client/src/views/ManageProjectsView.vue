@@ -1,8 +1,9 @@
 <script setup lang="ts">
+import PageLink from "../components/PageLink.vue";
 import { ref, reactive, watch } from "vue";
 import { api } from "../lib/api";
 import { resource } from "../lib/resource";
-import { auth, can, freshPassword, refreshAccess } from "../stores/auth";
+import { auth, can, refreshAccess } from "../stores/auth";
 import { covers, coverLabels, labels } from "../lib/content";
 import { slugify } from "../lib/roles";
 import { notify } from "../stores/notices";
@@ -13,7 +14,6 @@ import Icon from "../components/Icon.vue";
 import LoadState from "../components/LoadState.vue";
 import EmptyState from "../components/EmptyState.vue";
 import Modal from "../components/Modal.vue";
-import ConfirmationBanner from "../components/ConfirmationBanner.vue";
 import StatusBadge from "../components/StatusBadge.vue";
 const { data, loading, error, reload } = resource(() =>
   api<Page<Project>>("/workspace/projects?limit=50", { private: true }),
@@ -201,7 +201,7 @@ async function release(project: Project) {
         <Icon name="plus" :size="17" />Новый проект
       </button>
     </header>
-    <ConfirmationBanner v-if="can('projects.manage') && !editor" /><LoadState
+    <LoadState
       :loading="loading"
       :error="error"
       @retry="reload"
@@ -242,18 +242,17 @@ async function release(project: Project) {
                 @click="openMembers(project)"
               >
                 <Icon name="users" :size="16" />Участники</button
-              ><RouterLink
+              ><PageLink
                 v-if="project.published"
                 :to="'/projects/' + project.slug + '/'"
                 class="icon-button"
                 aria-label="Открыть проект"
                 ><Icon name="out" :size="18"
-              /></RouterLink>
+              /></PageLink>
             </div>
             <button
               v-if="auth.access?.owner && project.owner_protected"
               class="text-button small"
-              :disabled="!freshPassword"
               @click="release(project)"
             >
               Открыть редактирование для команды
@@ -272,7 +271,7 @@ async function release(project: Project) {
       wide
       :busy="busy"
       ><form class="form-stack" @submit.prevent="save">
-        <ConfirmationBanner v-if="can('projects.manage')" @prepare="remember" />
+        
         <div class="form-columns">
           <label
             >Название<input
@@ -340,7 +339,7 @@ async function release(project: Project) {
           публичном каталоге</label
         ><button
           class="button"
-          :disabled="busy || (can('projects.manage') && !freshPassword)"
+          :disabled="busy"
         >
           Сохранить проект<Icon name="check" :size="17" />
         </button></form></Modal
@@ -350,7 +349,7 @@ async function release(project: Project) {
       wide
       :busy="busy"
       @update:open="!$event && (selected = null)"
-      ><ConfirmationBanner />
+      >
       <div
         v-for="member in members"
         :key="member.account_id"
@@ -370,7 +369,7 @@ async function release(project: Project) {
         <button
           class="icon-button danger-text"
           aria-label="Удалить из проекта"
-          :disabled="busy || !freshPassword"
+          :disabled="busy"
           @click="modifyMembers(member.account_id)"
         >
           <Icon name="delete" :size="16" />
@@ -395,7 +394,7 @@ async function release(project: Project) {
             <option value="developer">Разработчик</option>
             <option value="tester">Тестировщик</option>
           </select></label
-        ><button class="button" :disabled="busy || !freshPassword">
+        ><button class="button" :disabled="busy">
           Назначить на проект<Icon name="plus" :size="17" />
         </button></form
     ></Modal>

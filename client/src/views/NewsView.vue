@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import PageLink from "../components/PageLink.vue";
 import { ref, watch } from "vue";
 import { api } from "../lib/api";
 import { resource } from "../lib/resource";
@@ -45,11 +46,11 @@ const { data, loading, error, reload } = resource(
           поделиться.
         </p>
       </div>
-      <RouterLink
+      <PageLink
         v-if="canSome('articles.create')"
         to="/workspace/articles/new/"
         class="button secondary"
-        ><Icon name="plus" :size="17" />Написать статью</RouterLink
+        ><Icon name="plus" :size="17" />Написать статью</PageLink
       >
     </header>
     <div class="catalog-tools">
@@ -83,8 +84,8 @@ const { data, loading, error, reload } = resource(
             : 'Первые записи ещё впереди. Пока можно познакомиться с проектами и командой.'
         "
         icon="news"
-        ><RouterLink to="/projects/" class="button secondary"
-          >Исследовать проекты<Icon name="arrow" /></RouterLink></EmptyState
+        ><PageLink to="/projects/" class="button secondary"
+          >Исследовать проекты<Icon name="arrow" /></PageLink></EmptyState
       ><Pagination
         :offset="offset"
         :limit="limit"

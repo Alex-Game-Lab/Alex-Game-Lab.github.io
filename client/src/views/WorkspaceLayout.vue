@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import PageLink from "../components/PageLink.vue";
 import { auth, login, hasWorkspace, canSome, can } from "../stores/auth";
 import Icon from "../components/Icon.vue";
 import EmptyState from "../components/EmptyState.vue";
@@ -59,8 +60,8 @@ const items = () => [
       title="Твой профиль готов"
       text="Рабочие инструменты появятся, когда тебе назначат роль или доступ к проекту."
       icon="shield"
-      ><RouterLink to="/profile/" class="button secondary"
-        >Мой профиль<Icon name="user" /></RouterLink
+      ><PageLink to="/profile/" class="button secondary"
+        >Мой профиль<Icon name="user" /></PageLink
     ></EmptyState>
     <div v-else class="workspace-layout">
       <aside class="workspace-sidebar">
@@ -70,7 +71,7 @@ const items = () => [
         </div>
         <nav aria-label="Рабочие инструменты">
           <template v-for="item in items()" :key="String(item[0])"
-            ><RouterLink
+            ><PageLink
               v-if="item[3]"
               :to="String(item[0])"
               :exact-active-class="
@@ -83,7 +84,7 @@ const items = () => [
               }"
               ><Icon :name="String(item[2])" :size="18" />{{
                 item[1]
-              }}</RouterLink
+              }}</PageLink
             ></template
           >
         </nav>

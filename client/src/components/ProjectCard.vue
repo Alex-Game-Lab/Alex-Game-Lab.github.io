@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import PageLink from "./PageLink.vue";
 import type { Project } from "../lib/types";
 import { covers, labels } from "../lib/content";
 import StatusBadge from "./StatusBadge.vue";
@@ -6,7 +7,7 @@ import Icon from "./Icon.vue";
 defineProps<{ project: Project; large?: boolean }>();
 </script>
 <template>
-  <RouterLink
+  <PageLink
     :to="'/projects/' + project.slug + '/'"
     class="project-card"
     :class="{ large }"
@@ -33,5 +34,5 @@ defineProps<{ project: Project; large?: boolean }>();
       <span class="inline-link"
         >Открыть проект <Icon name="arrow" :size="17"
       /></span></div
-  ></RouterLink>
+  ></PageLink>
 </template>

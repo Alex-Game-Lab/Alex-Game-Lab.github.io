@@ -1,0 +1,1 @@
+const sections={about:'about/',projects:'projects/',experience:'experience/',contact:'contact/'};const path=location.pathname.replace(/^\/akaalexey\//,'');location.replace('https://akaalexey.ru/'+(path?path:sections[location.hash.slice(1)]||''));

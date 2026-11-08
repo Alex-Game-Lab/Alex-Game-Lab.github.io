@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import PageLink from "../components/PageLink.vue";
 import Icon from "../components/Icon.vue";
 </script>
 <template>
@@ -36,9 +37,9 @@ import Icon from "../components/Icon.vue";
           связью. Пробуем подходы, проверяем идеи и дорабатываем то, что
           получается.
         </p>
-        <RouterLink to="/projects/" class="inline-link"
+        <PageLink to="/projects/" class="inline-link"
           >Посмотреть проекты<Icon name="out"
-        /></RouterLink>
+        /></PageLink>
       </div>
     </section>
     <section class="section container">
@@ -100,7 +101,7 @@ import Icon from "../components/Icon.vue";
           ><span>C++ · базовый уровень</span>
         </div>
         <div class="button-row">
-          <a href="/akaalexey/" class="button">Личный сайт<Icon name="out" /></a
+          <a href="https://akaalexey.ru/" class="button">Личный сайт<Icon name="out" /></a
           ><a
             href="https://t.me/akaAlexey"
             class="button secondary"

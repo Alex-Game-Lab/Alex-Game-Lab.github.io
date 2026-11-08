@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import PageLink from "../components/PageLink.vue";
 import {
   ref,
   reactive,
@@ -238,6 +239,7 @@ function addLink() {
 }
 function beforeUnload(e: BeforeUnloadEvent) {
   if (dirty.value) {
+    saveDraft(draftKey.value, { form: { ...form }, revision: revision.value });
     e.preventDefault();
     e.returnValue = "";
   }
@@ -269,8 +271,8 @@ onBeforeRouteLeave(
 <template>
   <div class="editor-page">
     <div class="editor-top">
-      <RouterLink to="/workspace/articles/" class="back-link"
-        ><Icon name="back" :size="16" />Публикации</RouterLink
+      <PageLink to="/workspace/articles/" class="back-link"
+        ><Icon name="back" :size="16" />Публикации</PageLink
       >
       <div class="editor-save-status">
         <span v-if="saving"
@@ -519,11 +521,11 @@ onBeforeRouteLeave(
               <p class="small muted">
                 Статья публикуется сразу после нажатия «Опубликовать».
               </p>
-              <RouterLink
+              <PageLink
                 v-if="id && form.status === 'published'"
                 :to="'/news/' + id + '/'"
                 class="inline-link small"
-                >Открыть на сайте<Icon name="out" :size="15" /></RouterLink
+                >Открыть на сайте<Icon name="out" :size="15" /></PageLink
               ><button
                 v-if="id && form.status !== 'archived'"
                 class="text-button small"

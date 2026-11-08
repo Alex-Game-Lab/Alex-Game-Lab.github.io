@@ -1,4 +1,4 @@
-name: Publish AGL and akaalexey websites
+name: Publish AGL website
 on:
   push:
     branches: [main]
@@ -19,7 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/configure-pages@v5
-      - name: Build and check both public websites
+      - name: Build and check AGL pages
         run: python3 tools/build_pages.py
       - uses: actions/upload-pages-artifact@v3
         with:

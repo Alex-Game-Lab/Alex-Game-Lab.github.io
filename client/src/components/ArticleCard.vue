@@ -1,11 +1,12 @@
 <script setup lang="ts">
+import PageLink from "./PageLink.vue";
 import type { Article } from "../lib/types";
 import { covers, shortDate, readingTime } from "../lib/content";
 import Icon from "./Icon.vue";
 defineProps<{ article: Article }>();
 </script>
 <template>
-  <RouterLink :to="'/news/' + article.slug + '/'" class="news-card"
+  <PageLink :to="'/news/' + article.slug + '/'" class="news-card"
     ><div class="news-image">
       <img
         v-if="covers[article.cover]"
@@ -32,5 +33,5 @@ defineProps<{ article: Article }>();
         <span>{{ article.author }}</span
         ><Icon name="out" :size="19" />
       </div></div
-  ></RouterLink>
+  ></PageLink>
 </template>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import PageLink from "../components/PageLink.vue";
 import { ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import { api } from "../lib/api";
@@ -95,8 +96,8 @@ async function saveReview() {
 </script>
 <template>
   <div class="container page-container">
-    <RouterLink to="/projects/" class="back-link"
-      ><Icon name="back" :size="17" />Все проекты</RouterLink
+    <PageLink to="/projects/" class="back-link"
+      ><Icon name="back" :size="17" />Все проекты</PageLink
     ><LoadState :loading="loading" :error="error" @retry="reload"
       ><template v-if="data"
         ><section class="project-heading">
@@ -190,9 +191,9 @@ async function saveReview() {
                 <dd>Alex Game Lab</dd>
               </div>
             </dl>
-            <RouterLink to="/news/" class="inline-link"
+            <PageLink to="/news/" class="inline-link"
               >Новости разработки<Icon name="arrow" :size="16"
-            /></RouterLink>
+            /></PageLink>
           </aside>
         </section>
         <section v-else-if="tab === 'news'" class="tab-content">

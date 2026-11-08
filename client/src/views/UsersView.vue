@@ -2,7 +2,7 @@
 import { ref, reactive, watch, computed } from "vue";
 import { api } from "../lib/api";
 import { resource } from "../lib/resource";
-import { auth, freshPassword } from "../stores/auth";
+import { auth } from "../stores/auth";
 import { notify } from "../stores/notices";
 import { errorMessage } from "../lib/errors";
 import { date } from "../lib/content";
@@ -18,7 +18,6 @@ import Icon from "../components/Icon.vue";
 import LoadState from "../components/LoadState.vue";
 import Modal from "../components/Modal.vue";
 import Pagination from "../components/Pagination.vue";
-import ConfirmationBanner from "../components/ConfirmationBanner.vue";
 const search = ref(""),
   query = ref(""),
   offset = ref(0),
@@ -183,7 +182,7 @@ if (restored)
       <h1>Участники<span class="accent">.</span></h1>
       <p>Профили, назначения ролей и персональные правила доступа.</p>
     </header>
-    <ConfirmationBanner @prepare="preserveChanges" />
+    
     <div class="catalog-tools">
       <span class="muted small">Ищи по имени в профиле</span
       ><label class="search-field"
@@ -228,7 +227,7 @@ if (restored)
       @update:open="!$event && (selected = null)"
       ><template v-if="selected"
         ><p class="small muted mono">{{ selected.id }}</p>
-        <ConfirmationBanner @prepare="preserveChanges" />
+        
         <div class="filter-tabs modal-tabs">
           <button :class="{ active: tab === 'roles' }" @click="tab = 'roles'">
             Роли</button
@@ -256,7 +255,7 @@ if (restored)
               v-model="selectedRoles"
               type="checkbox"
               :value="role.slug"
-              :disabled="!role.editable || !freshPassword"
+              :disabled="!role.editable"
             /><span class="role-dot" :style="{ background: role.color }"></span>
             <div>
               <strong>{{ role.title }}</strong
@@ -265,7 +264,7 @@ if (restored)
             <span class="small muted"
               >{{ role.permissions.length }} прав</span
             ></label
-          ><button class="button" :disabled="busy || !freshPassword">
+          ><button class="button" :disabled="busy">
             Сохранить назначения<Icon name="check" :size="17" />
           </button>
         </form>
@@ -294,7 +293,7 @@ if (restored)
             <button
               class="icon-button danger-text"
               aria-label="Удалить персональное правило"
-              :disabled="busy || !freshPassword"
+              :disabled="busy"
               @click="
                 perform(
                   () =>
@@ -346,7 +345,7 @@ if (restored)
                 maxlength="500"
                 rows="2"
               /></label
-            ><button class="button" :disabled="busy || !freshPassword">
+            ><button class="button" :disabled="busy">
               Добавить правило<Icon name="plus" :size="16" />
             </button>
           </form>
@@ -376,7 +375,7 @@ if (restored)
             <button
               v-if="!item.revoked_at"
               class="button secondary small"
-              :disabled="busy || !freshPassword"
+              :disabled="busy"
               @click="
                 perform(
                   () =>
@@ -420,7 +419,7 @@ if (restored)
                 maxlength="500"
                 rows="2"
               /></label
-            ><button class="button danger" :disabled="busy || !freshPassword">
+            ><button class="button danger" :disabled="busy">
               Применить ограничение<Icon name="lock" :size="16" />
             </button>
           </form></div></template

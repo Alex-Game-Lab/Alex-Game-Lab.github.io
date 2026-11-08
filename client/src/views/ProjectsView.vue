@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import PageLink from "../components/PageLink.vue";
 import { ref, computed } from "vue";
 import { api } from "../lib/api";
 import { resource } from "../lib/resource";
@@ -89,7 +90,7 @@ const filtered = computed(
       <Icon name="spark" />
       <p>
         Проекты растут шаг за шагом. Новости о новых возможностях — в
-        <RouterLink to="/news/">дневнике команды</RouterLink>.
+        <PageLink to="/news/">дневнике команды</PageLink>.
       </p>
     </div>
   </div>

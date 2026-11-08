@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import PageLink from "../components/PageLink.vue";
 import { auth, canSome, can } from "../stores/auth";
 import { api } from "../lib/api";
 import { resource } from "../lib/resource";
@@ -38,36 +39,36 @@ const projects = resource(() =>
           Напиши о ходе разработки, обнови проект или поделись результатами
           тестирования.
         </p>
-        <RouterLink
+        <PageLink
           v-if="canSome('articles.create')"
           to="/workspace/articles/new/"
           class="button"
-          ><Icon name="plus" :size="18" />Новая статья</RouterLink
-        ><RouterLink
+          ><Icon name="plus" :size="18" />Новая статья</PageLink
+        ><PageLink
           v-else-if="canSome('reports.create')"
           to="/workspace/reports/"
           class="button"
           >К отчётам<Icon name="arrow"
-        /></RouterLink>
+        /></PageLink>
       </div>
       <img src="/assets/agl-orbit-v2.webp" alt="" width="240" height="240" />
     </div>
     <div class="workspace-shortcuts">
-      <RouterLink
+      <PageLink
         v-if="canSome('articles.create') || can('articles.edit_any')"
         to="/workspace/articles/"
         ><Icon name="article" /><strong>Публикации</strong
-        ><span>Черновики и статьи команды</span><Icon name="out" /></RouterLink
-      ><RouterLink
+        ><span>Черновики и статьи команды</span><Icon name="out" /></PageLink
+      ><PageLink
         v-if="canSome('projects.edit') || can('projects.manage')"
         to="/workspace/projects/"
         ><Icon name="projects" /><strong>Проекты</strong
         ><span>Описание, обложка и участники</span
-        ><Icon name="out" /></RouterLink
-      ><RouterLink v-if="can('roles.manage_basic')" to="/workspace/roles/"
+        ><Icon name="out" /></PageLink
+      ><PageLink v-if="can('roles.manage_basic')" to="/workspace/roles/"
         ><Icon name="shield" /><strong>Роли и права</strong
-        ><span>Понятные правила доступа</span><Icon name="out" /></RouterLink
-      ><RouterLink
+        ><span>Понятные правила доступа</span><Icon name="out" /></PageLink
+      ><PageLink
         v-if="
           canSome('reports.create') ||
           canSome('reports.read_all') ||
@@ -76,16 +77,16 @@ const projects = resource(() =>
         to="/workspace/reports/"
         ><Icon name="comment" /><strong>Тестирование</strong
         ><span>Обратная связь о проектах</span><Icon name="out"
-      /></RouterLink>
+      /></PageLink>
     </div>
     <section v-if="articles" class="panel">
       <div class="panel-heading">
         <h2>Недавно в редакции</h2>
-        <RouterLink to="/workspace/articles/" class="inline-link small"
+        <PageLink to="/workspace/articles/" class="inline-link small"
           >Все статьи<Icon name="out" :size="15"
-        /></RouterLink>
+        /></PageLink>
       </div>
-      <RouterLink
+      <PageLink
         v-for="article in articles.data.value?.items"
         :key="article.id"
         :to="'/workspace/articles/' + article.id + '/'"
@@ -98,7 +99,7 @@ const projects = resource(() =>
           </p>
         </div>
         <Icon name="right" :size="18"
-      /></RouterLink>
+      /></PageLink>
       <p v-if="!articles.data.value?.items.length" class="muted small">
         Первая публикация начинается с черновика.
       </p>

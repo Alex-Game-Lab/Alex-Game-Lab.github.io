@@ -1,1 +1,0 @@
-import{d as s,o as t,c as a,n,s as o,b as r,t as c,u as d,m as u}from"./index-DUv5VSE9.js";const i={key:0,"aria-hidden":"true"},f=s({__name:"StatusBadge",props:{status:{},dot:{type:Boolean}},setup(e){return(l,m)=>(t(),a("span",{class:n(["badge","badge-"+e.status])},[e.dot?(t(),a("i",i)):o("",!0),r(c(d(u)[e.status]||e.status),1)],2))}});export{f as _};

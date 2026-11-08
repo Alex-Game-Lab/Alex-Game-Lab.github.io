@@ -46,8 +46,11 @@ html[data-theme="light"] {
   box-sizing: border-box;
 }
 html {
-  scroll-behavior: smooth;
+  scroll-behavior: auto;
   scroll-padding-top: 100px;
+}
+html {
+  -webkit-text-size-adjust: 100%;
 }
 body {
   margin: 0;
@@ -3820,6 +3823,18 @@ html[data-theme="light"] .badge-in_progress {
   }
 }
 @media (max-width: 640px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+  .header-actions {
+    gap: 6px;
+  }
+  .header-actions .icon-button {
+    min-width: 44px;
+    min-height: 44px;
+  }
   body {
     font-size: 13px;
   }
@@ -5206,4 +5221,32 @@ html[data-theme="light"] .badge-in_progress {
 /* Decorative art stays inside the viewport at intermediate widths. */
 body {
   overflow-x: clip;
+}
+
+@media (max-width: 480px) {
+  .hero-copy h1,
+  html[data-theme="light"] .hero-copy h1 {
+    font-size: clamp(2.35rem, 10.4vw, 3rem);
+  }
+  .workspace-main,
+  .editorial-main,
+  .role-card,
+  .form-columns > *,
+  .modal-content {
+    min-width: 0;
+  }
+  .workspace-heading h1,
+  .profile-cover h1,
+  .modal > header h2 {
+    overflow-wrap: anywhere;
+  }
+  .toast-stack {
+    right: 16px;
+    bottom: max(16px, env(safe-area-inset-bottom));
+  }
+  .mobile-nav a,
+  .workspace-sidebar nav a,
+  .filter-tabs > button {
+    min-height: 44px;
+  }
 }
