@@ -9,6 +9,7 @@ import type { Article } from "../lib/types";
 import MarkdownContent from "../components/MarkdownContent.vue";
 import LoadState from "../components/LoadState.vue";
 import Icon from "../components/Icon.vue";
+import { coverUrl } from "../lib/media";
 import { auth, can } from "../stores/auth";
 const route = useRoute();
 const { data, loading, error, reload } = resource(
@@ -30,19 +31,26 @@ async function share() {
     <PageLink to="/news/" class="back-link"
       ><Icon name="back" :size="17" />Все публикации</PageLink
     ><LoadState :loading="loading" :error="error" @retry="reload"
-      ><article v-if="data" class="article-page">
+      ><article
+        v-if="data"
+        class="article-page"
+        :class="{ 'article-brief': data.kind === 'news' }"
+      >
         <header>
-          <span class="eyebrow">ДНЕВНИК КОМАНДЫ</span>
+          <span class="eyebrow">{{
+            data.kind === "news" ? "НОВОСТЬ AGL" : "СТАТЬЯ AGL"
+          }}</span>
           <h1>{{ data.title }}</h1>
           <p class="article-lead">{{ data.excerpt }}</p>
           <div class="article-byline">
             <span class="avatar small"><Icon name="user" :size="18" /></span
             ><strong>{{ data.author }}</strong
             ><span>{{ date(data.published_at) }}</span
-            ><span>{{ readingTime(data.body) }} мин чтения</span
+            ><span v-if="data.kind !== 'news'"
+              >{{ readingTime(data.body) }} мин чтения</span
             ><button
               class="icon-button"
-              aria-label="Скопировать ссылку на статью"
+              aria-label="Скопировать ссылку на публикацию"
               @click="share"
             >
               <Icon name="link" :size="18" />
@@ -50,9 +58,9 @@ async function share() {
           </div>
         </header>
         <img
-          v-if="covers[data.cover]"
+          v-if="coverUrl(data)"
           class="article-cover"
-          :src="covers[data.cover]"
+          :src="coverUrl(data)"
           alt=""
           width="1280"
           height="720"

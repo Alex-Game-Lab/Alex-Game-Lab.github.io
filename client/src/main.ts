@@ -3,6 +3,7 @@ import App from "./App.vue";
 import { router } from "./router";
 import { initializeAuth, makeManager } from "./stores/auth";
 import "./style.css";
+import "./workspace.css";
 if (location.pathname === "/auth/silent/") {
   void makeManager()
     .signinSilentCallback()

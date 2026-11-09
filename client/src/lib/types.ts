@@ -18,6 +18,9 @@ export interface Project {
   updated_at?: string;
 }
 export interface Article {
+  kind: "news" | "article";
+  cover_media_id?: string | null;
+  has_draft?: boolean;
   id: string;
   slug: string;
   title: string;

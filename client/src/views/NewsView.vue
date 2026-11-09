@@ -13,6 +13,7 @@ import Icon from "../components/Icon.vue";
 const offset = ref(0),
   search = ref(""),
   query = ref(""),
+  kind = ref(""),
   limit = 9;
 let timer: ReturnType<typeof setTimeout>;
 watch(search, (value) => {
@@ -29,10 +30,12 @@ const { data, loading, error, reload } = resource(
         limit +
         "&offset=" +
         offset.value +
+        "&kind=" +
+        kind.value +
         "&search=" +
         encodeURIComponent(query.value),
     ),
-  [offset, query],
+  [offset, query, kind],
 );
 </script>
 <template>
@@ -50,10 +53,28 @@ const { data, loading, error, reload } = resource(
         v-if="canSome('articles.create')"
         to="/workspace/articles/new/"
         class="button secondary"
-        ><Icon name="plus" :size="17" />Написать статью</PageLink
+        ><Icon name="plus" :size="17" />Создать публикацию</PageLink
       >
     </header>
     <div class="catalog-tools">
+      <div class="filter-tabs" aria-label="Тип публикации">
+        <button
+          v-for="[value, label] in [
+            ['', 'Все'],
+            ['news', 'Новости'],
+            ['article', 'Статьи'],
+          ]"
+          :key="value"
+          :class="{ active: kind === value }"
+          :aria-pressed="kind === value"
+          @click="
+            kind = value;
+            offset = 0;
+          "
+        >
+          {{ label }}
+        </button>
+      </div>
       <span class="muted"
         >{{ data?.total ?? "Публикации команды"
         }}<template v-if="data?.total !== undefined">

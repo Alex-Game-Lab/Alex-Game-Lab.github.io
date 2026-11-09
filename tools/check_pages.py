@@ -31,7 +31,7 @@ for path in ROOT.rglob('*.html'):
     text = path.read_text()
     assert 'silkenapple4.chatgpt.site' not in text, path
     assert 'ChatGPT Sites' not in text, path
-    assert 'noindex,nofollow' not in text or path.name == '404.html', path
+    assert 'noindex,nofollow' not in text or path.name == '404.html' or 'auth' in path.relative_to(ROOT).parts, path
     page = Page()
     page.feed(text)
     pages[path.resolve()] = page

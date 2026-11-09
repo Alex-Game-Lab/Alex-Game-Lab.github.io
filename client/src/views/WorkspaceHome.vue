@@ -41,9 +41,9 @@ const projects = resource(() =>
         </p>
         <PageLink
           v-if="canSome('articles.create')"
-          to="/workspace/articles/new/"
+          to="/workspace/articles/new/?kind=news"
           class="button"
-          ><Icon name="plus" :size="18" />Новая статья</PageLink
+          ><Icon name="plus" :size="18" />Короткая новость</PageLink
         ><PageLink
           v-else-if="canSome('reports.create')"
           to="/workspace/reports/"
@@ -54,17 +54,23 @@ const projects = resource(() =>
       <img src="/assets/agl-orbit-v2.webp" alt="" width="240" height="240" />
     </div>
     <div class="workspace-shortcuts">
+      <PageLink v-if="auth.access?.owner" to="/workspace/content/"
+        ><Icon name="globe" /><strong>Содержимое сайта</strong
+        ><span>Главная и канал AGL</span><Icon name="out" /></PageLink
+      ><PageLink v-if="auth.access?.owner" to="/workspace/media/"
+        ><Icon name="image" /><strong>Медиатека</strong
+        ><span>Собственные изображения и обложки</span><Icon name="out"
+      /></PageLink>
       <PageLink
         v-if="canSome('articles.create') || can('articles.edit_any')"
         to="/workspace/articles/"
         ><Icon name="article" /><strong>Публикации</strong
-        ><span>Черновики и статьи команды</span><Icon name="out" /></PageLink
+        ><span>Новости, статьи и черновики</span><Icon name="out" /></PageLink
       ><PageLink
         v-if="canSome('projects.edit') || can('projects.manage')"
         to="/workspace/projects/"
         ><Icon name="projects" /><strong>Проекты</strong
-        ><span>Описание, обложка и участники</span
-        ><Icon name="out" /></PageLink
+        ><span>Описание, обложка и участники</span><Icon name="out" /></PageLink
       ><PageLink v-if="can('roles.manage_basic')" to="/workspace/roles/"
         ><Icon name="shield" /><strong>Роли и права</strong
         ><span>Понятные правила доступа</span><Icon name="out" /></PageLink
@@ -83,7 +89,7 @@ const projects = resource(() =>
       <div class="panel-heading">
         <h2>Недавно в редакции</h2>
         <PageLink to="/workspace/articles/" class="inline-link small"
-          >Все статьи<Icon name="out" :size="15"
+          >Все публикации<Icon name="out" :size="15"
         /></PageLink>
       </div>
       <PageLink

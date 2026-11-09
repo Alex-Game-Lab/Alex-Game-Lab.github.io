@@ -1,47 +1,101 @@
 <script setup lang="ts">
+import { computed, ref, watch } from "vue";
+import { useRoute } from "vue-router";
 import PageLink from "../components/PageLink.vue";
 import { auth, login, hasWorkspace, canSome, can } from "../stores/auth";
 import Icon from "../components/Icon.vue";
 import EmptyState from "../components/EmptyState.vue";
-const items = () => [
-  ["/workspace/", "Обзор", "dashboard", true],
+const route = useRoute(),
+  open = ref(false);
+watch(
+  () => route.fullPath,
+  () => (open.value = false),
+);
+const groups = computed(() =>
   [
-    "/workspace/articles/",
-    "Публикации",
-    "article",
-    canSome("articles.create") ||
-      canSome("articles.edit") ||
-      can("articles.edit_any"),
-  ],
-  [
-    "/workspace/projects/",
-    "Проекты",
-    "projects",
-    canSome("projects.edit") || can("projects.manage"),
-  ],
-  [
-    "/workspace/reports/",
-    "Тестирование",
-    "comment",
-    canSome("reports.create") ||
-      canSome("reports.read_all") ||
-      canSome("reports.read_assigned"),
-  ],
-  ["/workspace/users/", "Участники", "users", can("users.read")],
-  [
-    "/workspace/roles/",
-    "Роли и права",
-    "shield",
-    can("roles.manage_basic") || can("roles.manage"),
-  ],
-  [
-    "/workspace/metrics/",
-    "Показатели",
-    "metrics",
-    canSome("metrics.read") || canSome("players.adjust"),
-  ],
-  ["/workspace/audit/", "Журнал", "clock", can("audit.read")],
-];
+    {
+      title: "Работа",
+      items: [
+        {
+          path: "/workspace/",
+          title: "Обзор",
+          icon: "dashboard",
+          allowed: true,
+        },
+        {
+          path: "/workspace/articles/",
+          title: "Публикации",
+          icon: "article",
+          allowed:
+            canSome("articles.create") ||
+            canSome("articles.edit") ||
+            can("articles.edit_any"),
+        },
+        {
+          path: "/workspace/content/",
+          title: "Содержимое сайта",
+          icon: "globe",
+          allowed: auth.access?.owner,
+        },
+        {
+          path: "/workspace/media/",
+          title: "Медиа",
+          icon: "image",
+          allowed: auth.access?.owner,
+        },
+        {
+          path: "/workspace/projects/",
+          title: "Проекты",
+          icon: "projects",
+          allowed: canSome("projects.edit") || can("projects.manage"),
+        },
+        {
+          path: "/workspace/reports/",
+          title: "Тестирование",
+          icon: "comment",
+          allowed:
+            canSome("reports.create") ||
+            canSome("reports.read_all") ||
+            canSome("reports.read_assigned"),
+        },
+      ],
+    },
+    {
+      title: "Управление",
+      items: [
+        {
+          path: "/workspace/users/",
+          title: "Участники",
+          icon: "users",
+          allowed: can("users.read"),
+        },
+        {
+          path: "/workspace/roles/",
+          title: "Роли и права",
+          icon: "shield",
+          allowed: can("roles.manage_basic") || can("roles.manage"),
+        },
+        {
+          path: "/workspace/metrics/",
+          title: "Показатели",
+          icon: "metrics",
+          allowed: canSome("metrics.read") || canSome("players.adjust"),
+        },
+        {
+          path: "/workspace/audit/",
+          title: "Журнал",
+          icon: "clock",
+          allowed: can("audit.read"),
+        },
+      ],
+    },
+  ]
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => item.allowed),
+    }))
+    .filter((group) => group.items.length),
+);
 </script>
 <template>
   <div class="container workspace-page">
@@ -50,15 +104,15 @@ const items = () => [
     </div>
     <EmptyState
       v-else-if="!auth.user"
-      title="Здесь работает команда"
-      text="Войди в свой аккаунт, чтобы открыть доступные инструменты."
+      title="Войти в рабочее пространство"
+      text="Открой доступные тебе инструменты с аккаунтом AGL ID."
       icon="dashboard"
-      ><button class="button" @click="login()">
-        Войти<Icon name="out" /></button></EmptyState
-    ><EmptyState
+      ><button class="button" @click="login()">Войти<Icon name="out" /></button
+    ></EmptyState>
+    <EmptyState
       v-else-if="!hasWorkspace"
       title="Твой профиль готов"
-      text="Рабочие инструменты появятся, когда тебе назначат роль или доступ к проекту."
+      text="Рабочие инструменты появятся после назначения роли или доступа к проекту."
       icon="shield"
       ><PageLink to="/profile/" class="button secondary"
         >Мой профиль<Icon name="user" /></PageLink
@@ -66,38 +120,55 @@ const items = () => [
     <div v-else class="workspace-layout">
       <aside class="workspace-sidebar">
         <div class="workspace-brand">
-          <span class="eyebrow">AGL / ВНУТРИ</span>
-          <h2>Рабочее<br />пространство</h2>
+          <span class="eyebrow">AGL STUDIO</span>
+          <h2>Рабочее пространство</h2>
         </div>
-        <nav aria-label="Рабочие инструменты">
-          <template v-for="item in items()" :key="String(item[0])"
+        <button
+          class="workspace-nav-toggle"
+          :aria-expanded="open"
+          aria-controls="workspace-navigation"
+          @click="open = !open"
+        >
+          <Icon name="menu" /><span>{{
+            route.meta.title || "Выбрать раздел"
+          }}</span
+          ><Icon :name="open ? 'close' : 'down'" />
+        </button>
+        <nav
+          id="workspace-navigation"
+          aria-label="Рабочие инструменты"
+          :class="{ 'is-open': open }"
+        >
+          <div
+            v-for="group in groups"
+            :key="group.title"
+            class="workspace-nav-group"
+          >
+            <span>{{ group.title }}</span
             ><PageLink
-              v-if="item[3]"
-              :to="String(item[0])"
-              :exact-active-class="
-                item[0] === '/workspace/' ? 'active' : 'exact'
-              "
+              v-for="item in group.items"
+              :key="item.path"
+              :to="item.path"
               :class="{
                 active:
-                  $route.path.startsWith(String(item[0])) &&
-                  item[0] !== '/workspace/',
+                  item.path === '/workspace/'
+                    ? route.path === item.path
+                    : route.path.startsWith(item.path),
               }"
-              ><Icon :name="String(item[2])" :size="18" />{{
-                item[1]
-              }}</PageLink
-            ></template
-          >
+              ><Icon :name="item.icon" />{{ item.title }}</PageLink
+            >
+          </div>
         </nav>
         <div class="workspace-identity">
           <span class="avatar small"
-            ><Icon :name="auth.access?.owner ? 'crown' : 'user'" :size="17"
+            ><Icon :name="auth.access?.owner ? 'crown' : 'user'"
           /></span>
           <div>
             <strong>{{ auth.profile?.display_name || "Участник AGL" }}</strong
             ><span>{{
               auth.access?.owner
-                ? "Owner"
-                : auth.access?.roles.map((r) => r.title).join(", ") ||
+                ? "Владелец"
+                : auth.access?.roles.map((role) => role.title).join(", ") ||
                   "Участник"
             }}</span>
           </div>
