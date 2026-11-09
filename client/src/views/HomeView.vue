@@ -6,6 +6,9 @@ import type { Page, Project, Article } from "../lib/types";
 import ProjectCard from "../components/ProjectCard.vue";
 import ArticleCard from "../components/ArticleCard.vue";
 import Icon from "../components/Icon.vue";
+import { siteHome, loadSiteHome } from "../lib/site-home";
+import { mediaUrl } from "../lib/media";
+void loadSiteHome();
 const projects = resource(() => api<Page<Project>>("/projects?limit=3"));
 const news = resource(() => api<Page<Article>>("/news?limit=3"));
 </script>
@@ -16,10 +19,9 @@ const news = resource(() => api<Page<Article>>("/news?limit=3"));
         <div class="eyebrow">
           <span class="live-dot"></span> НЕЗАВИСИМАЯ КОМАНДА РАЗРАБОТКИ
         </div>
-        <h1>Из любопытства.<br />В целые <em>миры.</em></h1>
+        <h1>{{ siteHome.title }}</h1>
         <p>
-          Создаём игры, исследуем механики и собираем идеи в истории, в которых
-          хочется остаться.
+          {{ siteHome.intro }}
         </p>
         <div class="button-row">
           <PageLink to="/projects/" class="button"
@@ -28,6 +30,13 @@ const news = resource(() => api<Page<Article>>("/news?limit=3"));
             >Знакомство с AGL<Icon name="arrow" :size="17"
           /></PageLink>
         </div>
+        <a
+          :href="siteHome.channel_url"
+          class="inline-link hero-channel"
+          target="_blank"
+          rel="noopener"
+          >{{ siteHome.channel_label }}<Icon name="out" :size="16"
+        /></a>
         <div class="hero-bottom">
           <span class="hero-index">01 / ALEX GAME LAB</span
           ><a href="/projects/" class="scroll-link"
@@ -37,7 +46,11 @@ const news = resource(() => api<Page<Article>>("/news?limit=3"));
       </div>
       <div class="hero-visual">
         <img
-          src="/assets/agl-worlds-v2.webp"
+          :src="
+            siteHome.hero_media_id
+              ? mediaUrl(siteHome.hero_media_id)
+              : '/assets/agl-worlds-v2.webp'
+          "
           alt="Миниатюрный игровой мир с порталами, тропинками и инструментами создателя"
           width="1672"
           height="941"
@@ -58,8 +71,8 @@ const news = resource(() => api<Page<Article>>("/news?limit=3"));
     <div class="discipline-strip" aria-hidden="true">
       <div>
         ГЕЙМДИЗАЙН <b>✳</b> КОД <b>✳</b> ИСТОРИИ <b>✳</b> ЛЮБОПЫТСТВО
-        <b>✳</b> ГЕЙМДИЗАЙН <b>✳</b> КОД <b>✳</b> ИСТОРИИ
-        <b>✳</b> ЛЮБОПЫТСТВО <b>✳</b>
+        <b>✳</b> ГЕЙМДИЗАЙН <b>✳</b> КОД <b>✳</b> ИСТОРИИ <b>✳</b> ЛЮБОПЫТСТВО
+        <b>✳</b>
       </div>
     </div>
     <section id="games" class="section container">
@@ -181,9 +194,7 @@ const news = resource(() => api<Page<Article>>("/news?limit=3"));
             дневнике.
           </p>
         </div>
-        <PageLink to="/news/" class="round-arrow"
-          ><Icon name="out"
-        /></PageLink>
+        <PageLink to="/news/" class="round-arrow"><Icon name="out" /></PageLink>
       </div>
     </section>
     <section id="team" class="founder-teaser container">

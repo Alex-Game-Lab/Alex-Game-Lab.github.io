@@ -87,6 +87,16 @@ export const router = createRouter({
           meta: { title: "Рабочее пространство" },
         },
         {
+          path: "content/",
+          component: () => import("./views/SiteContentView.vue"),
+          meta: { title: "Содержимое сайта" },
+        },
+        {
+          path: "media/",
+          component: () => import("./views/MediaView.vue"),
+          meta: { title: "Медиатека" },
+        },
+        {
           path: "articles/",
           component: () => import("./views/ArticlesView.vue"),
           meta: { title: "Публикации" },
@@ -94,7 +104,7 @@ export const router = createRouter({
         {
           path: "articles/new/",
           component: () => import("./views/EditorView.vue"),
-          meta: { title: "Новая статья" },
+          meta: { title: "Новая публикация" },
         },
         {
           path: "articles/:id/",

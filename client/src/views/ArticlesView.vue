@@ -72,7 +72,7 @@ async function remove() {
       { method: "DELETE", private: true },
     );
     removing.value = null;
-    notify("Статья удалена");
+    notify("Публикация удалена");
     await reload();
   } catch (e) {
     notify(errorMessage(e), true);
@@ -93,7 +93,7 @@ async function remove() {
         v-if="canSome('articles.create')"
         to="/workspace/articles/new/"
         class="button"
-        ><Icon name="plus" :size="17" />Написать статью</PageLink
+        ><Icon name="plus" :size="17" />Создать публикацию</PageLink
       >
     </header>
     <div class="catalog-tools">
@@ -196,7 +196,7 @@ async function remove() {
           v-if="canSome('articles.create')"
           to="/workspace/articles/new/"
           class="button"
-          ><Icon name="plus" :size="17" />Первая статья</PageLink
+          ><Icon name="plus" :size="17" />Создать публикацию</PageLink
         ></EmptyState
       ><Pagination
         :offset="offset"
@@ -206,13 +206,13 @@ async function remove() {
         @change="offset = $event" /></LoadState
     ><Modal
       :open="!!removing"
-      title="Удалить статью?"
+      title="Удалить публикацию?"
       :busy="busy"
       @update:open="!$event && (removing = null)"
       ><p>«{{ removing?.title }}» исчезнет из редакции и с сайта.</p>
       <div class="button-row">
         <button class="button danger" :disabled="busy" @click="remove">
-          Удалить статью</button
+          Удалить публикацию</button
         ><button
           class="button secondary"
           :disabled="busy"

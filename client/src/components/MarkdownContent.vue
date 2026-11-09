@@ -2,7 +2,7 @@
 import { computed } from "vue";
 import { marked } from "marked";
 import DOMPurify from "dompurify";
-import { covers } from "../lib/content";
+import { API, covers } from "../lib/content";
 const props = withDefaults(defineProps<{ body: string; format?: string }>(), {
   format: "markdown",
 });
@@ -52,8 +52,11 @@ const rendered = computed(() => {
     }
   }
   for (const image of doc.querySelectorAll("img")) {
-    if (!Object.values(covers).includes(image.getAttribute("src") || ""))
-      image.remove();
+    const source = image.getAttribute("src") || "";
+    const uploaded =
+      source.startsWith(API + "/v1/media/") &&
+      /^[0-9a-f-]{36}$/.test(source.slice((API + "/v1/media/").length));
+    if (!Object.values(covers).includes(source) && !uploaded) image.remove();
     else {
       image.setAttribute("loading", "lazy");
       image.setAttribute("decoding", "async");

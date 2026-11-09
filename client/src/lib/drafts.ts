@@ -1,14 +1,17 @@
 import { auth } from "../stores/auth";
-const key = (id: string) =>
-  "agl.draft." + (auth.access?.account_id || "") + "." + id;
-export function saveDraft(id: string, value: unknown) {
+const key = (id: string, owner = auth.access?.account_id || "") =>
+  "agl.draft." + owner + "." + id;
+export function saveDraft(id: string, value: unknown, owner?: string) {
   try {
-    sessionStorage.setItem(key(id), JSON.stringify({ at: Date.now(), value }));
+    sessionStorage.setItem(
+      key(id, owner),
+      JSON.stringify({ at: Date.now(), value }),
+    );
   } catch {}
 }
-export function readDraft<T>(id: string): T | null {
+export function readDraft<T>(id: string, owner?: string): T | null {
   try {
-    const record = JSON.parse(sessionStorage.getItem(key(id)) || "null");
+    const record = JSON.parse(sessionStorage.getItem(key(id, owner)) || "null");
     return record && Date.now() - record.at < 86400000
       ? (record.value as T)
       : null;
@@ -16,8 +19,8 @@ export function readDraft<T>(id: string): T | null {
     return null;
   }
 }
-export function removeDraft(id: string) {
+export function removeDraft(id: string, owner?: string) {
   try {
-    sessionStorage.removeItem(key(id));
+    sessionStorage.removeItem(key(id, owner));
   } catch {}
 }

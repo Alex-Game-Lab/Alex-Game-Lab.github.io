@@ -33,6 +33,11 @@ export function errorMessage(error: unknown): string {
         role_is_system_or_assigned:
           "Нельзя удалить системную роль или роль, которая назначена участникам.",
         unknown_permission: "Одно из прав больше недоступно. Обнови список.",
+        media_not_published:
+          "Сначала сделай изображение доступным на сайте в медиатеке.",
+        invalid_image:
+          "Не удалось прочитать изображение. Выбери PNG, JPG или WebP.",
+        image_too_large: "Изображение слишком большое. Уменьши его размер.",
         validation_error: "Проверь заполненные поля.",
         not_found: "Запись не найдена или недоступна.",
         slug_exists: "Такой адрес проекта уже занят.",
