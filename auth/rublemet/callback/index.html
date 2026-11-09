@@ -1,0 +1,8 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer"><title>Вернуться в Рублемёт · AGL ID</title><style>html{color-scheme:light dark;font:16px/1.6 system-ui}body{max-width:32rem;margin:15vh auto;padding:24px}a{display:inline-block;padding:12px 20px;border-radius:10px;background:#225b43;color:white;text-decoration:none}[hidden]{display:none}</style></head>
+<body><main><h1>Вернуться в Рублемёт</h1><p>Если игра не открылась автоматически, нажми кнопку.</p><a id="return" hidden>Открыть игру</a><p>Если возврат не работает, разреши «Рублемёту» открывать поддерживаемые ссылки в настройках Android и начни вход в игре ещё раз.</p></main><script>
+const source=new URLSearchParams(location.search),query=new URLSearchParams();
+for(const name of ['code','state','iss','error','error_description'])if(source.has(name))query.set(name,source.get(name));
+if(query.has('state')&&(query.has('code')||query.has('error'))){const link=document.getElementById('return');link.href='intent://alexgamelab.ru/auth/rublemet/callback?'+query.toString()+'#Intent;scheme=https;package=ru.rublerush.game;end';link.hidden=false;}
+history.replaceState(null,'',location.pathname);
+</script></body></html>

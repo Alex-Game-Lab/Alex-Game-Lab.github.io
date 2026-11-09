@@ -23,6 +23,10 @@ def main():
     shutil.copytree(ROOT / 'sites/agl/dist', OUTPUT)
     shutil.copy2(ROOT / 'CNAME', OUTPUT / 'CNAME')
     build_portal(OUTPUT)
+    # Public Android App Link metadata and the browser return page.
+    native = ROOT / 'native-android'
+    if native.is_dir():
+        shutil.copytree(native, OUTPUT, dirs_exist_ok=True)
     # The personal website is now owned and built by akaAlexey/akaalexey.
     # Keep old public links useful without publishing a second portfolio.
     for old, new in (('', ''), ('privacy/', 'privacy/'), ('projects/rublemet/', 'projects/rublemet/')):
@@ -59,3 +63,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+

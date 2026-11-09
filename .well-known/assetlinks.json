@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "ru.rublerush.game",
+      "sha256_cert_fingerprints": [
+        "24:D2:65:08:70:70:43:58:84:B7:D0:D9:0F:40:DC:48:D3:27:A7:88:59:C0:4C:28:53:96:FD:DE:1D:8D:01:AD"
+      ]
+    }
+  }
+]
