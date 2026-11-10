@@ -365,6 +365,7 @@ async function release(project: Project) {
         <span class="avatar small"><Icon name="user" :size="17" /></span>
         <div>
           <strong>{{
+            users.find((u) => u.id === member.account_id)?.username ||
             users.find((u) => u.id === member.account_id)?.display_name ||
             "Участник AGL"
           }}</strong>
@@ -388,7 +389,7 @@ async function release(project: Project) {
           >Аккаунт<select v-model="memberId" required>
             <option value="" disabled>Выбери участника</option>
             <option v-for="user in users" :key="user.id" :value="user.id">
-              {{ user.display_name || "Без имени" }} · {{ user.id.slice(0, 8) }}
+              {{ user.username || user.display_name || "Аккаунт" }} · {{ user.id.slice(0, 8) }}
             </option>
           </select></label
         ><label v-else

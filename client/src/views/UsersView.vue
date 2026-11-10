@@ -27,7 +27,7 @@ const search = ref(""),
   offset = ref(0),
   limit = 15,
   selected = ref<UserDetail | null>(null),
-  selectedRoles = ref<string[]>([]),
+  selectedRole = ref("player"),
   busy = ref(false),
   tab = ref("overview"),
   roles = ref<Role[]>([]),
@@ -78,7 +78,7 @@ async function open(user: UserSummary) {
     selected.value = await api<UserDetail>("/staff/users/" + user.id, {
       private: true,
     });
-    selectedRoles.value = [...(selected.value.roles || [])];
+    selectedRole.value = selected.value.roles?.[0] || "player";
     tab.value = "overview";
   } catch (e) {
     notify(errorMessage(e), true);
@@ -115,7 +115,7 @@ async function saveRoles() {
         api("/staff/users/" + selected.value!.id + "/roles", {
           private: true,
           method: "PUT",
-          body: { roles: selectedRoles.value },
+          body: { roles: [selectedRole.value] },
         }),
       "Роли обновлены",
     );
@@ -157,7 +157,7 @@ function preserveChanges() {
   if (selected.value)
     saveDraft("user-edit", {
       id: selected.value.id,
-      roles: selectedRoles.value,
+      roles: [selectedRole.value],
       tab: tab.value,
       override: { ...override },
       ban: { ...ban },
@@ -173,7 +173,7 @@ const restored = readDraft<{
 if (restored)
   void open({ id: restored.id } as UserSummary).then(() => {
     if (selected.value) {
-      selectedRoles.value = restored.roles;
+      selectedRole.value = restored.roles?.[0] || "player";
       tab.value = restored.tab;
       Object.assign(override, restored.override);
       Object.assign(ban, restored.ban);
@@ -191,7 +191,7 @@ if (restored)
     
     <div class="filter-tabs"><button :class="{active:state==='active'}" @click="state='active'">Действующие</button><button v-if="can('users.delete')" :class="{active:state==='deleted'}" @click="state='deleted'">Корзина</button></div>
     <div class="catalog-tools">
-      <span class="muted small">По имени профиля или ID аккаунта</span
+      <span class="muted small">По регистрационному нику, имени профиля или ID</span
       ><label class="search-field"
         ><Icon name="search" :size="17" /><input
           v-model="search"
@@ -210,7 +210,7 @@ if (restored)
         >
           <span class="avatar"><Icon name="user" /></span>
           <div>
-            <strong>{{ user.display_name || "Участник AGL" }}</strong
+            <strong>{{ user.username || user.display_name || "Аккаунт " + user.id.slice(0,8) }}</strong
             ><small>В AGL с {{ date(user.created_at) }}</small>
           </div>
           <span class="mono small user-id">{{ user.id.slice(0, 8) }}</span
@@ -228,7 +228,7 @@ if (restored)
     /></LoadState>
     <Modal
       :open="!!selected"
-      :title="selected?.display_name || 'Профиль участника'"
+      :title="selected?.username || selected?.display_name || 'Карточка аккаунта'"
       wide
       :busy="busy"
       @update:open="!$event && (selected = null)"
@@ -249,9 +249,9 @@ if (restored)
           </button>
         </div>
         <section v-if="tab==='overview'" class="account-overview">
-          <dl class="account-facts"><div><dt>Имя профиля</dt><dd>{{selected.display_name||'Не указано'}}</dd></div><div><dt>Язык</dt><dd>{{selected.locale}}</dd></div><div><dt>Создан</dt><dd>{{date(selected.created_at)}}</dd></div><div><dt>Профиль обновлён</dt><dd>{{date(selected.updated_at)}}</dd></div><div><dt>Версия профиля</dt><dd>{{selected.revision}}</dd></div><div v-if="selected.deleted_at"><dt>В корзине с</dt><dd>{{date(selected.deleted_at)}}</dd></div></dl>
+          <dl class="account-facts"><div><dt>Регистрационный ник</dt><dd>{{selected.username||'Не получен из AGL ID'}}</dd></div><div><dt>Имя профиля</dt><dd>{{selected.display_name||'Не указано'}}</dd></div><div><dt>Язык</dt><dd>{{selected.locale}}</dd></div><div><dt>Создан</dt><dd>{{date(selected.created_at)}}</dd></div><div><dt>Профиль обновлён</dt><dd>{{date(selected.updated_at)}}</dd></div><div><dt>Версия профиля</dt><dd>{{selected.revision}}</dd></div><div v-if="selected.deleted_at"><dt>В корзине с</dt><dd>{{date(selected.deleted_at)}}</dd></div></dl>
           <h3>Описание профиля</h3><p class="note-body">{{selected.bio||'Не заполнено'}}</p>
-          <h3>Роли</h3><div class="badge-row"><span v-if="selected.is_owner" class="badge">Owner · полный доступ</span><span v-for="r in selected.role_details" :key="r.slug" class="badge">{{r.title}}</span><span v-if="!selected.is_owner&&!selected.role_details.length" class="muted">Базовый аккаунт</span></div>
+          <h3>Роли</h3><div class="badge-row"><span v-if="selected.is_owner" class="badge">Owner · полный доступ</span><span v-for="r in selected.is_owner?[]:selected.role_details" :key="r.slug" class="badge">{{r.title}}</span><span v-if="!selected.is_owner&&!selected.role_details.length" class="muted">Базовый аккаунт</span></div>
           <h3>Доверенные проекты</h3><ul v-if="selected.projects.length" class="account-memberships"><li v-for="p in selected.projects" :key="p.slug"><strong>{{p.title}}</strong><span>{{p.kind==='developer'?'Разработчик':'Тестировщик'}}{{p.deleted_at?' · проект в корзине':''}}</span></li></ul><p v-else class="muted">Назначений нет.</p>
           <h3>Материалы и игра</h3><dl class="account-facts"><div v-for="(label,key) in {publications:'Публикации',reports:'Отчёты',reviews:'Отзывы',save_slots:'Слоты сохранений'}" :key="key"><dt>{{label}}</dt><dd>{{selected.activity[key]||0}}</dd></div></dl>
           <details><summary>Действующие общие права · {{selected.effective_permissions.length}}</summary><ul class="account-permissions"><li v-for="id in selected.effective_permissions" :key="id">{{permissions.find(p=>p.id===id)?.title||id}}</li></ul><p class="field-note">Права на отдельные проекты и запреты показаны во вкладке «Личные права»; ограничения действуют поверх разрешений.</p></details>
@@ -264,27 +264,8 @@ if (restored)
           class="form-stack"
           @submit.prevent="saveRoles"
         >
-          <label
-            v-for="role in roles"
-            :key="role.slug"
-            class="role-assignment"
-            :class="{ disabled: !selected.capabilities.assign_roles||!role.assignable }"
-            ><input
-              v-model="selectedRoles"
-              type="checkbox"
-              :value="role.slug"
-              :disabled="!selected.capabilities.assign_roles||!role.assignable"
-            /><span class="role-dot" :style="{ background: role.color }"></span>
-            <div>
-              <strong>{{ role.title }}</strong
-              ><small>{{ role.description || role.slug }}</small>
-            </div>
-            <span class="small muted"
-              >{{ role.permissions.length }} прав</span
-            ></label
-          ><button v-if="selected.capabilities.assign_roles" class="button" :disabled="busy">
-            Сохранить назначения<Icon name="check" :size="17" />
-          </button>
+          <p class="field-note">У аккаунта одна роль. «Игрок» назначается по умолчанию. Изменение своих данных и работа со своими сохранениями доступны без дополнительных разрешений.</p>
+          <label>Роль аккаунта<select v-model="selectedRole" required :disabled="!selected.capabilities.assign_roles||busy"><option v-if="selected.is_owner" value="owner">Owner · закреплён за владельцем</option><option v-for="role in roles" :key="role.slug" :value="role.slug" :disabled="!role.assignable&&role.slug!==selectedRole">{{role.title}}{{role.slug==='player'?' · по умолчанию':''}}</option></select></label><p class="field-note">{{roles.find(r=>r.slug===selectedRole)?.description}}</p><button v-if="selected.capabilities.assign_roles" class="button" :disabled="busy">Сохранить роль<Icon name="check" :size="17"/></button>
         </form>
         <div v-if="tab === 'permissions'">
           <div
