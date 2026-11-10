@@ -23,7 +23,13 @@ export function errorMessage(error: unknown): string {
         privileged_account_protected:
           "Изменить этот аккаунт может только Owner.",
         account_restricted:
-          "Доступ к аккаунту ограничен. Свяжись с @akaAlexey.",
+          "Доступ к аккаунту ограничен администратором.",
+        confirmation_mismatch: "Подтверждение не совпало с выбранной записью.",
+        account_deleted: "Аккаунт находится в корзине. Доступ к API закрыт до восстановления администратором.",
+        self_deletion_forbidden: "Нельзя удалить аккаунт текущего сотрудника.",
+        system_role_protected: "Системную роль удалить нельзя. Можно изменить её разрешения.",
+        already_deleted: "Запись уже находится в корзине. Обнови список.",
+        publication_requires_admin: "Для публикации нужно отдельное право на этот проект.",
         authentication_required: "Войди в аккаунт, чтобы продолжить.",
         delegation_ceiling: "Admin может управлять только младшими ролями.",
         owner_is_not_assignable:

@@ -15,6 +15,8 @@ export interface Project {
   published: boolean;
   revision: number;
   owner_protected?: boolean;
+  deleted_at?: string | null;
+  capabilities?: {edit:boolean;publish:boolean;delete:boolean;assign:boolean};
   updated_at?: string;
 }
 export interface Article {
@@ -75,6 +77,8 @@ export interface Role {
   assigned_count?: number;
   editable?: boolean;
   deletable?: boolean;
+  assignable?: boolean;
+  deleted_at?: string | null;
 }
 export interface Permission {
   id: string;
@@ -82,6 +86,8 @@ export interface Permission {
   group: string;
   delegable_by_admin: boolean;
   owner_only: boolean;
+  legacy?: boolean;
+  description?: string;
 }
 export interface UserSummary {
   id: string;
@@ -91,6 +97,21 @@ export interface UserSummary {
   roles?: string[];
   overrides?: Override[];
   bans?: Ban[];
+  updated_at?: string;
+  revision?: number;
+  deleted_at?: string | null;
+}
+export interface UserDetail extends UserSummary {
+  bio:string; avatar_key:string; revision:number; is_owner:boolean;
+  role_details:Role[];
+  projects:{slug:string;title:string;kind:string;deleted_at:string|null}[];
+  activity:Record<string,number>;
+  effective_permissions:string[];
+  capabilities:{delete:boolean;assign_roles:boolean;moderate:boolean;notes_create:boolean};
+}
+export interface AccountNote {
+  id:string;account_id:string;author_id:string;author:string;body:string;revision:number;
+  created_at:string;updated_at:string;deleted_at:string|null;editable:boolean;deletable:boolean;
 }
 export interface Override {
   id: string;

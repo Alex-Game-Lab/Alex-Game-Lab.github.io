@@ -3,7 +3,7 @@ import PageLink from "../components/PageLink.vue";
 import { ref, reactive, watch } from "vue";
 import { api } from "../lib/api";
 import { resource } from "../lib/resource";
-import { auth, can, refreshAccess } from "../stores/auth";
+import { auth, can, canSome, refreshAccess } from "../stores/auth";
 import { covers, coverLabels, labels } from "../lib/content";
 import { slugify } from "../lib/roles";
 import { notify } from "../stores/notices";
@@ -15,9 +15,12 @@ import LoadState from "../components/LoadState.vue";
 import EmptyState from "../components/EmptyState.vue";
 import Modal from "../components/Modal.vue";
 import StatusBadge from "../components/StatusBadge.vue";
+import TrashDialog from "../components/TrashDialog.vue";
+const state=ref("active"), removing=ref<Project|null>(null);
+const capable=(p:Project,action:"edit"|"publish"|"delete"|"assign")=>p.capabilities?.[action]??!!auth.access?.owner;
 const { data, loading, error, reload } = resource(() =>
-  api<Page<Project>>("/workspace/projects?limit=50", { private: true }),
-);
+  api<Page<Project>>("/workspace/projects?limit=50&state="+state.value, { private: true }),
+[state]);
 const editor = ref(false),
   editing = ref<Project | null>(null),
   busy = ref(false),
@@ -166,6 +169,8 @@ async function modifyMembers(removeId?: string) {
     busy.value = false;
   }
 }
+async function trashProject(payload:{confirmation:string;expected_revision:number;reason:string}){if(!removing.value)return;busy.value=true;try{const row=removing.value;await api('/workspace/projects/'+row.slug+(row.deleted_at?'/restore':''),{private:true,method:row.deleted_at?'POST':'DELETE',body:payload});notify(row.deleted_at?'Проект восстановлен как скрытый':'Проект перемещён в корзину');removing.value=null;await Promise.all([reload(),refreshAccess()]);}catch(e){notify(errorMessage(e),true)}finally{busy.value=false;}}
+async function publishProject(project:Project){busy.value=true;try{await api('/workspace/projects/'+project.slug+'/publication',{private:true,method:'PATCH',body:{published:!project.published,expected_revision:project.revision}});notify(project.published?'Проект скрыт':'Проект опубликован');await reload();}catch(e){notify(errorMessage(e),true)}finally{busy.value=false;}}
 async function release(project: Project) {
   if (
     !window.confirm(
@@ -197,10 +202,12 @@ async function release(project: Project) {
           Поддерживай описания в актуальном состоянии и назначай участников.
         </p>
       </div>
-      <button v-if="can('projects.manage')" class="button" @click="open()">
+      <button v-if="state==='active'&&can('projects.create')" class="button" @click="open()">
         <Icon name="plus" :size="17" />Новый проект
       </button>
     </header>
+    <div class="filter-tabs"><button :class="{active:state==='active'}" @click="state='active'">Действующие</button><button v-if="canSome('projects.delete')||canSome('projects.delete_any')" :class="{active:state==='deleted'}" @click="state='deleted'">Корзина</button></div>
+    <p class="field-note">Доверенный проект даёт область работы. Конкретные действия — редактирование, публикация, участники и удаление — определяются отдельно в роли.</p>
     <LoadState
       :loading="loading"
       :error="error"
@@ -231,18 +238,18 @@ async function release(project: Project) {
             <p>{{ project.summary }}</p>
             <div class="button-row">
               <button
-                v-if="!project.owner_protected || auth.access?.owner"
+                v-if="!project.deleted_at&&capable(project,'edit')"
                 class="button secondary small"
                 @click="open(project)"
               >
                 <Icon name="edit" :size="16" />Редактировать</button
               ><button
-                v-if="can('projects.assign', project.slug)"
+                v-if="!project.deleted_at&&capable(project,'assign')"
                 class="button secondary small"
                 @click="openMembers(project)"
               >
                 <Icon name="users" :size="16" />Участники</button
-              ><PageLink
+              ><button v-if="!project.deleted_at&&capable(project,'publish')" class="button secondary small" :disabled="busy" @click="publishProject(project)"><Icon name="eye" :size="16"/>{{project.published?'Скрыть':'Опубликовать'}}</button><button v-if="capable(project,'delete')" class="button secondary small" :class="{'danger-text':!project.deleted_at}" :disabled="busy" @click="removing=project"><Icon :name="project.deleted_at?'undo':'delete'" :size="16"/>{{project.deleted_at?'Восстановить':'Удалить'}}</button><PageLink
                 v-if="project.published"
                 :to="'/projects/' + project.slug + '/'"
                 class="icon-button"
@@ -251,7 +258,7 @@ async function release(project: Project) {
               /></PageLink>
             </div>
             <button
-              v-if="auth.access?.owner && project.owner_protected"
+              v-if="!project.deleted_at&&auth.access?.owner && project.owner_protected"
               class="text-button small"
               @click="release(project)"
             >
@@ -334,7 +341,7 @@ async function release(project: Project) {
             </select></label
           >
         </div>
-        <label v-if="can('projects.manage')" class="checkbox-label"
+        <label v-if="editing?capable(editing,'publish'):(can('projects.publish')||can('projects.publish_any'))" class="checkbox-label"
           ><input v-model="form.published" type="checkbox" />Показывать проект в
           публичном каталоге</label
         ><button
@@ -398,5 +405,6 @@ async function release(project: Project) {
           Назначить на проект<Icon name="plus" :size="17" />
         </button></form
     ></Modal>
+    <TrashDialog :open="!!removing" :title="removing?.deleted_at?'Восстановить проект?':'Удалить проект?'" :target="removing?.slug||''" :revision="removing?.revision||1" :restore="!!removing?.deleted_at" :busy="busy" :description="removing?.deleted_at?'Проект вернётся скрытым. Опубликовать его можно отдельным действием.':'Проект «'+(removing?.title||'')+'» исчезнет из публичного каталога, связанные новости будут скрыты. Материалы, участники и игровые сохранения сохраняются. Проект можно восстановить.'" @update:open="!$event&&(removing=null)" @confirm="trashProject"/>
   </div>
 </template>

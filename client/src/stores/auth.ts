@@ -6,7 +6,7 @@ import {
   WebStorageStateStore,
 } from "oidc-client-ts";
 import { API, ISSUER } from "../lib/content";
-import { ApiError } from "../lib/errors";
+import { ApiError, errorMessage } from "../lib/errors";
 import { notify } from "./notices";
 import type { Access, Profile } from "../lib/types";
 
@@ -62,10 +62,22 @@ const teamPermissions = [
   "articles.edit_any",
   "projects.edit",
   "projects.manage",
+  "projects.create",
+  "projects.edit_any",
+  "projects.publish",
+  "projects.publish_any",
+  "projects.assign",
+  "projects.assign_assigned",
+  "projects.delete",
+  "projects.delete_any",
   "reports.create",
   "reports.read_all",
   "reports.read_assigned",
   "roles.manage_basic",
+  "roles.create_basic",
+  "roles.edit_basic",
+  "roles.delete_basic",
+  "roles.assign_basic",
   "roles.manage",
   "permissions.manage",
   "users.read",
@@ -100,7 +112,10 @@ async function readMe(path: string) {
     credentials: "omit",
     signal: AbortSignal.timeout(10000),
   });
-  if (!r.ok) throw new ApiError("authentication_required", r.status);
+  if (!r.ok) {
+    const detail=await r.json().catch(()=>null);
+    throw new ApiError(typeof detail?.detail === "string" ? detail.detail : "authentication_required", r.status);
+  }
   return r.json();
 }
 export async function refreshAccess() {
@@ -176,14 +191,15 @@ export async function initializeAuth(): Promise<string | null> {
     try {
       auth.user = await current.signinSilent();
       if (auth.user) await refreshAccess();
-    } catch {
+    } catch (e) {
+      if(e instanceof ApiError && e.code === "account_deleted") notify(errorMessage(e),true);
       auth.user = null;
       auth.access = null;
       auth.profile = null;
     }
-  } catch {
+  } catch (e) {
     await clearAuth();
-    notify("Вход не завершён. Попробуй войти снова.", true);
+    notify(e instanceof ApiError && e.code === "account_deleted" ? errorMessage(e) : "Вход не завершён. Попробуй войти снова.", true);
     return "/profile/";
   } finally {
     auth.loading = false;
