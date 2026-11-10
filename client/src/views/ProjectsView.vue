@@ -1,4 +1,9 @@
 <script setup lang="ts">
+import projectSnapshot from "../content/projects.json";
+import {usePage,usePageMeta} from "../lib/pages";
+import ContentBlocks from "../components/ContentBlocks.vue";
+import PublicHero from "../components/PublicHero.vue";
+const page=usePage("agl","projects");usePageMeta(page);
 import PageLink from "../components/PageLink.vue";
 import { ref, computed } from "vue";
 import { api } from "../lib/api";
@@ -9,7 +14,7 @@ import LoadState from "../components/LoadState.vue";
 import EmptyState from "../components/EmptyState.vue";
 import Icon from "../components/Icon.vue";
 const { data, loading, error, reload } = resource(() =>
-  api<Page<Project>>("/projects?limit=50"),
+  api<Page<Project>>("/projects?limit=50"),[],projectSnapshot as unknown as Page<Project>,
 );
 const search = ref(""),
   filter = ref("all");
@@ -25,15 +30,8 @@ const filtered = computed(
 );
 </script>
 <template>
-  <div class="container page-container">
-    <header class="page-heading">
-      <span class="eyebrow">КАТАЛОГ ALEX GAME LAB</span>
-      <h1>Миры, которые<br />мы создаём<span class="accent">.</span></h1>
-      <p>
-        Игры и программные продукты AGL. Исследуй проект, загляни в процесс
-        разработки и поделись впечатлениями.
-      </p>
-    </header>
+  <div class="container page-container public-page">
+    <PublicHero :page="page" compact/>
     <div class="catalog-tools">
       <div class="filter-tabs" aria-label="Тип проекта">
         <button
@@ -58,7 +56,7 @@ const filtered = computed(
           aria-label="Найти проект"
       /></label>
     </div>
-    <LoadState :loading="loading" :error="error" @retry="reload"
+    <LoadState :stale="!!data" :loading="loading" :error="error" @retry="reload"
       ><div v-if="filtered.length" class="project-grid">
         <ProjectCard
           v-for="project in filtered"
@@ -86,12 +84,7 @@ const filtered = computed(
         {{ data?.total ?? data?.items.length ?? 0 }}
       </p></LoadState
     >
-    <div class="end-note">
-      <Icon name="spark" />
-      <p>
-        Проекты растут шаг за шагом. Новости о новых возможностях — в
-        <PageLink to="/news/">дневнике команды</PageLink>.
-      </p>
-    </div>
+    <ContentBlocks :blocks="page.sections"/>
+
   </div>
 </template>

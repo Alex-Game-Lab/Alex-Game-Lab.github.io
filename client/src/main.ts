@@ -4,6 +4,7 @@ import { router } from "./router";
 import { initializeAuth, makeManager } from "./stores/auth";
 import "./style.css";
 import "./workspace.css";
+import "./public.css";
 if (location.pathname === "/auth/silent/") {
   void makeManager()
     .signinSilentCallback()

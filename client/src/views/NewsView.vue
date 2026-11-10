@@ -1,118 +1,13 @@
 <script setup lang="ts">
-import PageLink from "../components/PageLink.vue";
-import { ref, watch } from "vue";
-import { api } from "../lib/api";
-import { resource } from "../lib/resource";
-import { canSome } from "../stores/auth";
-import type { Page, Article } from "../lib/types";
-import ArticleCard from "../components/ArticleCard.vue";
-import LoadState from "../components/LoadState.vue";
-import EmptyState from "../components/EmptyState.vue";
-import Pagination from "../components/Pagination.vue";
-import Icon from "../components/Icon.vue";
-const offset = ref(0),
-  search = ref(""),
-  query = ref(""),
-  kind = ref(""),
-  limit = 9;
-let timer: ReturnType<typeof setTimeout>;
-watch(search, (value) => {
-  clearTimeout(timer);
-  timer = setTimeout(() => {
-    offset.value = 0;
-    query.value = value;
-  }, 350);
-});
-const { data, loading, error, reload } = resource(
-  () =>
-    api<Page<Article>>(
-      "/news?limit=" +
-        limit +
-        "&offset=" +
-        offset.value +
-        "&kind=" +
-        kind.value +
-        "&search=" +
-        encodeURIComponent(query.value),
-    ),
-  [offset, query, kind],
-);
+import {usePage,usePageMeta} from '../lib/pages';
+import newsSnapshot from '../content/news.json';
+import {ref,watch,computed,nextTick,onBeforeUnmount} from 'vue';import {useRoute} from 'vue-router';import {api} from '../lib/api';import {resource} from '../lib/resource';import {canSome} from '../stores/auth';import type {Page,Article,Project} from '../lib/types';import ArticleCard from '../components/ArticleCard.vue';import LoadState from '../components/LoadState.vue';import Pagination from '../components/Pagination.vue';import Icon from '../components/Icon.vue';
+const page=usePage('agl','news');usePageMeta(page);const route=useRoute(),offset=ref(0),search=ref(''),query=ref(''),project=ref(String(route.query.project||'')),period=ref('all'),searchOpen=ref(false),searchInput=ref<HTMLInputElement>();const limit=12;
+const projects=resource(()=>api<Page<Project>>('/projects?limit=50'));
+const since=computed(()=>{if(period.value==='all')return '';const d=new Date();d.setDate(d.getDate()-Number(period.value));return d.toISOString().slice(0,10);});
+let timer:ReturnType<typeof setTimeout>;watch(search,value=>{clearTimeout(timer);timer=setTimeout(()=>{offset.value=0;query.value=value;},300);});watch([project,period],()=>offset.value=0);onBeforeUnmount(()=>clearTimeout(timer));
+const {data,loading,error,reload}=resource(()=>api<Page<Article>>('/news?limit='+limit+'&offset='+offset.value+'&project_slug='+encodeURIComponent(project.value)+(since.value?'&date_from='+since.value:'')+'&search='+encodeURIComponent(query.value)),[offset,query,project,period],newsSnapshot as unknown as Page<Article>);
+const items=computed(()=>data.value?.items.filter(a=>(!project.value||a.project_slug===project.value)&&(!since.value||String(a.published_at)>=since.value)&&(!query.value||(a.title+' '+a.excerpt).toLocaleLowerCase('ru').includes(query.value.toLocaleLowerCase('ru'))))||[]);
+async function toggleSearch(){searchOpen.value=!searchOpen.value;if(searchOpen.value){await nextTick();searchInput.value?.focus();}else search.value='';}
 </script>
-<template>
-  <div class="container page-container">
-    <header class="page-heading split">
-      <div>
-        <span class="eyebrow">ДНЕВНИК ALEX GAME LAB</span>
-        <h1>За кулисами<br />новых миров<span class="accent">.</span></h1>
-        <p>
-          Новости проектов, заметки о разработке и идеи, которыми хочется
-          поделиться.
-        </p>
-      </div>
-      <PageLink
-        v-if="canSome('articles.create')"
-        to="/workspace/articles/new/"
-        class="button secondary"
-        ><Icon name="plus" :size="17" />Создать публикацию</PageLink
-      >
-    </header>
-    <div class="catalog-tools">
-      <div class="filter-tabs" aria-label="Тип публикации">
-        <button
-          v-for="[value, label] in [
-            ['', 'Все'],
-            ['news', 'Новости'],
-            ['article', 'Статьи'],
-          ]"
-          :key="value"
-          :class="{ active: kind === value }"
-          :aria-pressed="kind === value"
-          @click="
-            kind = value;
-            offset = 0;
-          "
-        >
-          {{ label }}
-        </button>
-      </div>
-      <span class="muted"
-        >{{ data?.total ?? "Публикации команды"
-        }}<template v-if="data?.total !== undefined">
-          публикаций</template
-        ></span
-      ><label class="search-field"
-        ><Icon name="search" :size="18" /><input
-          v-model="search"
-          placeholder="Найти публикацию"
-          type="search"
-          aria-label="Найти публикацию"
-      /></label>
-    </div>
-    <LoadState :loading="loading" :error="error" @retry="reload"
-      ><div v-if="data?.items.length" class="news-grid">
-        <ArticleCard
-          v-for="article in data.items"
-          :key="article.id"
-          :article="article"
-        />
-      </div>
-      <EmptyState
-        v-else
-        :title="query ? 'Ничего не нашлось' : 'У каждой идеи есть история'"
-        :text="
-          query
-            ? 'Попробуй изменить запрос.'
-            : 'Первые записи ещё впереди. Пока можно познакомиться с проектами и командой.'
-        "
-        icon="news"
-        ><PageLink to="/projects/" class="button secondary"
-          >Исследовать проекты<Icon name="arrow" /></PageLink></EmptyState
-      ><Pagination
-        :offset="offset"
-        :limit="limit"
-        :count="data?.items.length || 0"
-        :total="data?.total"
-        @change="offset = $event"
-    /></LoadState>
-  </div>
-</template>
+<template><div class="container news-feed"><h1 class="visually-hidden">{{page.title}}</h1><div class="feed-tools" :class="{'search-open':searchOpen}" aria-label="Поиск и фильтры новостей"><label class="feed-project"><Icon name="projects" :size="17"/><select v-model="project" aria-label="Проект"><option value="">Все проекты</option><option v-for="p in projects.data.value?.items" :key="p.slug" :value="p.slug">{{p.title}}</option></select></label><label class="feed-date"><Icon name="clock" :size="17"/><select v-model="period" aria-label="Период публикации"><option value="all">Все даты</option><option value="7">За неделю</option><option value="30">За месяц</option><option value="365">За год</option></select></label><label class="feed-search"><Icon name="search" :size="18"/><input ref="searchInput" v-model="search" type="search" maxlength="100" placeholder="Поиск" aria-label="Поиск по новостям" @keydown.esc="toggleSearch"/></label><button class="icon-button search-switch" :aria-label="searchOpen?'Закрыть поиск':'Открыть поиск'" :aria-expanded="searchOpen" @click="toggleSearch"><Icon :name="searchOpen?'close':'search'"/></button></div><LoadState :stale="!!data" :loading="loading" :error="error" @retry="reload"><div v-if="items.length" class="news-grid feed-list"><ArticleCard v-for="article in items" :key="article.id" :article="article"/></div><div v-else class="feed-empty"><Icon name="news" :size="32"/><h2>Публикаций не найдено</h2><p>Попробуйте другой проект, период или запрос.</p><button class="button secondary" @click="project='';period='all';search=''">Сбросить фильтры</button></div><Pagination :offset="offset" :limit="limit" :count="items.length" :total="data?.total" @change="offset=$event"/></LoadState><div v-if="canSome('articles.create')" class="feed-staff"><a href="/workspace/articles/new/?kind=news" class="text-link"><Icon name="plus" :size="18"/>Короткая новость</a><a href="/workspace/articles/" class="text-link">Редакция ↗</a></div></div></template>

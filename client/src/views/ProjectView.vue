@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import projectSnapshot from "../content/projects.json";
+import {usePage,usePageMeta} from "../lib/pages";
+import PublicHero from "../components/PublicHero.vue";import ContentBlocks from "../components/ContentBlocks.vue";
+const page=usePage("agl","project-rublemet");usePageMeta(page);
 import PageLink from "../components/PageLink.vue";
 import { ref, watch } from "vue";
 import { useRoute } from "vue-router";
@@ -25,6 +29,7 @@ const { data, loading, error, reload } = resource(
   () =>
     api<Project>("/projects/" + encodeURIComponent(String(route.params.slug))),
   [() => route.params.slug],
+  (projectSnapshot.items.find(p=>p.slug===String(route.params.slug))||null) as unknown as Project|null,
 );
 const news = resource(
   () =>
@@ -50,7 +55,7 @@ const reviews = resource(
   [() => route.params.slug],
 );
 watch(data, (value) => {
-  if (value) document.title = value.title + " · AGL";
+  if (value && value.slug!=="rublemet") document.title = value.title + " · AGL";
 });
 async function openReview() {
   try {
@@ -95,54 +100,13 @@ async function saveReview() {
 }
 </script>
 <template>
-  <div class="container page-container">
+  <div class="container page-container public-page game-page">
     <PageLink to="/projects/" class="back-link"
       ><Icon name="back" :size="17" />Все проекты</PageLink
-    ><LoadState :loading="loading" :error="error" @retry="reload"
+    ><LoadState :stale="!!data" :loading="loading" :error="error" @retry="reload"
       ><template v-if="data"
-        ><section class="project-heading">
-          <div>
-            <span class="eyebrow">ПРОЕКТ ALEX GAME LAB</span>
-            <div class="badge-row">
-              <StatusBadge :status="data.status" dot /><span
-                class="badge muted"
-                >{{ labels[data.kind] }}</span
-              >
-            </div>
-            <h1>{{ data.title }}</h1>
-            <p>{{ data.summary }}</p>
-            <div class="button-row">
-              <a
-                v-if="data.slug === 'rublemet'"
-                href="/games/rublemet/"
-                class="button"
-                >Погрузиться в мир<Icon name="out" /></a
-              ><a
-                v-else
-                href="https://t.me/akaAlexey"
-                class="button secondary"
-                target="_blank"
-                rel="noopener"
-                >Узнать о проекте<Icon name="out" /></a
-              ><button
-                v-if="can('reviews.create', data.slug)"
-                class="button secondary"
-                @click="openReview"
-              >
-                Написать отзыв<Icon name="comment" :size="18" />
-              </button>
-            </div>
-          </div>
-          <div class="project-heading-image">
-            <img
-              v-if="covers[data.cover]"
-              :src="covers[data.cover]"
-              :alt="data.title"
-              width="960"
-              height="600"
-            />
-          </div>
-        </section>
+        ><PublicHero v-if="data.slug==='rublemet'" :page="page"/><section v-else class="project-heading"><div><p class="eyebrow">ПРОЕКТ AGL</p><h1>{{data.title}}</h1><p>{{data.summary}}</p></div></section>
+        <div class="game-meta"><StatusBadge :status="data.status" dot/><span>Android</span><span>Кликер / история</span><button v-if="can('reviews.create',data.slug)" class="text-link" @click="openReview">Написать отзыв ↗</button></div>
         <div class="detail-tabs" aria-label="Разделы проекта">
           <button
             v-for="[key, title] in [
@@ -160,42 +124,7 @@ async function saveReview() {
             }}</span>
           </button>
         </div>
-        <section v-if="tab === 'about'" class="project-about">
-          <div class="project-description">
-            <span class="eyebrow">ВНУТРИ ПРОЕКТА</span>
-            <h2>У каждого мира<br />своя история.</h2>
-            <p class="plain-text">{{ data.description || data.summary }}</p>
-            <template v-if="data.slug === 'rublemet'"
-              ><p>
-                В разработке соединяются игровые механики, сюжет и тексты.
-                Подробности мира, персонажи и визуальные материалы — на странице
-                «Рублемёта».
-              </p>
-              <a href="/games/rublemet/" class="inline-link"
-                >Персонажи и мир игры<Icon name="out" /></a
-            ></template>
-          </div>
-          <aside class="project-facts panel">
-            <h3>Коротко о проекте</h3>
-            <dl>
-              <div>
-                <dt>Направление</dt>
-                <dd>{{ labels[data.kind] }}</dd>
-              </div>
-              <div>
-                <dt>Статус</dt>
-                <dd>{{ labels[data.status] }}</dd>
-              </div>
-              <div>
-                <dt>Команда</dt>
-                <dd>Alex Game Lab</dd>
-              </div>
-            </dl>
-            <PageLink to="/news/" class="inline-link"
-              >Новости разработки<Icon name="arrow" :size="16"
-            /></PageLink>
-          </aside>
-        </section>
+        <section v-if="tab === 'about'"><ContentBlocks v-if="data.slug==='rublemet'" :blocks="page.sections"/><p v-else class="plain-text">{{data.description||data.summary}}</p></section>
         <section v-else-if="tab === 'news'" class="tab-content">
           <div v-if="news.data.value?.items.length" class="news-grid">
             <ArticleCard

@@ -1,0 +1,25 @@
+{
+  "items": [
+    {
+      "id": "528e9846-8fc5-4060-9919-896110059a36",
+      "slug": "528e9846-8fc5-4060-9919-896110059a36",
+      "title": "Рублемет демо 12 ноября",
+      "excerpt": "12 ноября стартует закрытое тестирование с участием 20 тестировщиков. Каждый тестировщик получает привилегированный AGL ID с инструментами тестировщика для всех проектов AGL. Удачи!",
+      "body": "\n![Рублемёт](/assets/rublemet-cover.webp)\n",
+      "format": "markdown",
+      "kind": "news",
+      "cover_media_id": null,
+      "project_slug": "rublemet",
+      "cover": "worlds",
+      "status": "published",
+      "revision": 2,
+      "created_at": "2026-11-08T19:33:00.538645+00:00",
+      "updated_at": "2026-11-08T19:33:05.814625+00:00",
+      "published_at": "2026-11-08T19:33:00.538645+00:00",
+      "author": "akaalexey"
+    }
+  ],
+  "limit": 50,
+  "offset": 0,
+  "total": 1
+}
