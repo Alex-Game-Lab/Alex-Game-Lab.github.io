@@ -1,0 +1,19 @@
+{
+  "items": [
+    {
+      "slug": "rublemet",
+      "title": "Рублемёт",
+      "summary": "Игра Alex Game Lab в разработке.",
+      "description": "Алексей руководит проектом, работает над игровыми механиками, сюжетом и текстами.",
+      "kind": "game",
+      "status": "development",
+      "published": true,
+      "cover": "rublemet",
+      "revision": 1,
+      "updated_at": "2026-11-06T13:28:09.210502+00:00"
+    }
+  ],
+  "limit": 50,
+  "offset": 0,
+  "total": 1
+}

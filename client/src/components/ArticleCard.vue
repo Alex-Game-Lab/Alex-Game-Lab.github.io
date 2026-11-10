@@ -11,7 +11,7 @@ defineProps<{ article: Article }>();
     :to="'/news/' + article.slug + '/'"
     class="news-card"
     :class="{ 'news-card-brief': article.kind === 'news' }"
-    ><div v-if="coverUrl(article)" class="news-image">
+    ><div v-if="coverUrl(article) && (article.kind!=='news' || article.cover_media_id || article.cover==='rublemet')" class="news-image">
       <img
         v-if="coverUrl(article)"
         :src="coverUrl(article)"

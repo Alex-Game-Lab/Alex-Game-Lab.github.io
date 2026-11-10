@@ -107,48 +107,7 @@ async function showSaves(game: Game) {
     <div v-if="auth.loading" class="loading-state">
       <Icon name="loading" class="spin" />Открываем профиль…
     </div>
-    <template v-else-if="!auth.user"
-      ><section class="auth-landing">
-        <div>
-          <span class="eyebrow">ЕДИНЫЙ АККАУНТ AGL ID</span>
-          <h1>Твои истории.<br />Твой прогресс<span class="accent">.</span></h1>
-          <p>
-            Один аккаунт для сайта и подключённых игр. Сохраняй прогресс, следи
-            за проектами и возвращайся к своим мирам.
-          </p>
-          <div class="button-row">
-            <button class="button" @click="login()">
-              Войти<Icon name="out" /></button
-            ><button class="button secondary" @click="login('register')">
-              Создать аккаунт<Icon name="plus" :size="18" />
-            </button>
-          </div>
-          <p class="small muted">
-            Для регистрации нужны ник и пароль. Почту можно оставить пустой.
-          </p>
-          <div class="account-benefits">
-            <span><Icon name="user" :size="18" />Свой профиль</span
-            ><span><Icon name="game" :size="18" />Игровые сохранения</span
-            ><span><Icon name="shield" :size="18" />Доступ по роли</span>
-          </div>
-        </div>
-        <div class="auth-landing-art">
-          <img
-            src="/assets/agl-orbit-v2.webp"
-            alt=""
-            width="600"
-            height="600"
-          /><span class="orbit-label">AGL ID / ТВОЁ ПРОСТРАНСТВО</span>
-        </div>
-      </section>
-      <div class="help-line">
-        <Icon name="comment" :size="18" />
-        <p>
-          Нужна помощь со входом?
-          <a href="https://t.me/akaAlexey" target="_blank" rel="noopener"
-            >Напиши @akaAlexey<Icon name="out" :size="13"
-          /></a>
-        </p></div></template
+    <template v-else-if="!auth.user"><section class="compact-auth" aria-labelledby="auth-title"><Icon name="shield" :size="32"/><h1 id="auth-title">AGL ID</h1><div class="button-row"><button class="button" @click="login()">Войти<Icon name="out"/></button><button class="button secondary" @click="login('register')">Регистрация<Icon name="plus"/></button></div><p>Для регистрации нужны ник и пароль. Почта необязательна.</p><a href="/privacy/" class="text-link">Данные и конфиденциальность<Icon name="shield" :size="16"/></a></section></template
     ><template v-else>
       <header class="profile-cover">
         <div class="profile-identity">

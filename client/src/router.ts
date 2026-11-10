@@ -1,3 +1,10 @@
+import PrivacyView from "./views/PrivacyView.vue";
+import HomeView from "./views/HomeView.vue";
+import ProjectsView from "./views/ProjectsView.vue";
+import ProjectView from "./views/ProjectView.vue";
+import AboutView from "./views/AboutView.vue";
+import NewsView from "./views/NewsView.vue";
+import ArticleView from "./views/ArticleView.vue";
 import { createRouter, createWebHistory } from "vue-router";
 const query = new URLSearchParams(location.search),
   restored = query.get("agl_path");
@@ -42,32 +49,33 @@ export const router = createRouter({
   routes: [
     {
       path: "/",
-      component: () => import("./views/HomeView.vue"),
+      component: HomeView,
       meta: { title: "Игры, идеи, люди" },
     },
     {
       path: "/projects/",
-      component: () => import("./views/ProjectsView.vue"),
+      component: ProjectsView,
       meta: { title: "Проекты" },
     },
     {
       path: "/projects/:slug/",
-      component: () => import("./views/ProjectView.vue"),
+      component: ProjectView,
       meta: { title: "Проект" },
     },
+    {path:"/games/:slug/",component:ProjectView,meta:{title:"Рублемёт"}},
     {
       path: "/about/",
-      component: () => import("./views/AboutView.vue"),
+      component: AboutView,
       meta: { title: "О нас" },
     },
     {
       path: "/news/",
-      component: () => import("./views/NewsView.vue"),
+      component: NewsView,
       meta: { title: "Новости" },
     },
     {
       path: "/news/:slug/",
-      component: () => import("./views/ArticleView.vue"),
+      component: ArticleView,
       meta: { title: "Статья" },
     },
     {
@@ -75,6 +83,7 @@ export const router = createRouter({
       component: () => import("./views/ProfileView.vue"),
       meta: { title: "Профиль", private: true },
     },
+    {path:"/privacy/",component:PrivacyView,meta:{title:"Данные и конфиденциальность"}},
     { path: "/account/", redirect: "/profile/" },
     { path: "/portal/", redirect: "/news/" },
     {

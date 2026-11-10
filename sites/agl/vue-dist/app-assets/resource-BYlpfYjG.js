@@ -1,1 +1,0 @@
-import{x as f,G as c,k as i,a7 as v}from"./index-DtCaJhhG.js";function h(u,o=[]){const s=v(null),a=i(!0),r=i("");let e=0;async function t(){const l=++e;a.value=!0,r.value="";try{const n=await u();l===e&&(s.value=n)}catch(n){l===e&&(r.value=c(n))}finally{l===e&&(a.value=!1)}}return o.length?f(o,t,{immediate:!0}):t(),{data:s,loading:a,error:r,reload:t}}export{h as r};

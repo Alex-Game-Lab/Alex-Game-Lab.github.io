@@ -74,3 +74,19 @@ Limits: Owner browser workflows used actual Vue components with isolated synthet
 Rollback: a previous frontend can use the additive server contract. Keep migration 0005 and runtime grants when correcting backend issues; use a forward fix instead of dropping production content/media tables. Pre-migration dumps are private under `/opt/agl/shared/pre-migration/`; no restore was performed.
 
 No release blocker remains for the stage 1 scope. Stage 2 must complete the public AGL and personal redesign, new art/motion, remaining editable pages and legacy project consolidation. Do not repeat the full audit or the completed fast test set without new changes or a specific failure.
+
+## Stage 2 — implementation in progress, 10 November 2026
+
+Branches: `feat/redesign-stage2-20261110` in all affected repositories. Bases: AGL `8760f16`, backend `7d01bb6`, personal `f05a03f`.
+
+Backend PR #8 extends existing page editions to 13 AGL/portfolio documents, constrained blocks/gallery/links, public site bundles, published HTML/OG snapshots and media metadata. No new database migration. Existing identity subjects, roles, native callbacks and assetlinks remain unchanged.
+
+The latest owner corrections supersede the earlier contact and introductory-copy plan:
+
+- News begins with a compact single-row project/date/search toolbar, followed by the first publication. No large introduction, publication counter or news/article filter. Type remains available in the editor.
+- Both the profile entry screen and Keycloak are reduced to forms/actions and essential data links. Marketing artwork/story is removed from authentication.
+- Direct personal Telegram links and first-name introductions are removed from both sites. AGL emphasizes projects/work, portfolio uses `akaalexey`.
+- The administration Telegram bot remains a separate future integration. No working bot identity/inbox was supplied or configured; no live support/recovery promise is displayed.
+- Data inventory from schemas is recorded in backend `docs/DATA_INVENTORY_2026-11-10.md`; a factual public data notice replaces the obsolete no-account claim. Formal operator details, retention/deletion rules and a working request channel remain to be established.
+
+Exactly three generated originals are integrated as optimized assets, with source prompts/references in `docs/REDESIGN_ART.md`. Personal-site art has its own provenance copy. Browser-width tests will be reported separately from physical mobile verification.

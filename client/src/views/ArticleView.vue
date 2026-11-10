@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import newsSnapshot from "../content/news.json";
 import PageLink from "../components/PageLink.vue";
 import { useRoute } from "vue-router";
 import { watch } from "vue";
@@ -15,13 +16,14 @@ const route = useRoute();
 const { data, loading, error, reload } = resource(
   () => api<Article>("/news/" + encodeURIComponent(String(route.params.slug))),
   [() => route.params.slug],
+  (newsSnapshot.items.find(p=>p.slug===String(route.params.slug))||null) as unknown as Article|null,
 );
 watch(data, (value) => {
-  if (value) document.title = value.title + " · AGL";
+  if (value) {document.title = value.title + " · AGL";document.querySelector('meta[name="description"]')?.setAttribute('content',value.excerpt||value.body.slice(0,180));}
 });
-async function share() {
+async function share(preview = false) {
   try {
-    await navigator.clipboard.writeText(location.href);
+    await navigator.clipboard.writeText(preview ? "https://api.alexgamelab.ru/v1/previews/news/"+data.value?.slug : location.href);
     (await import("../stores/notices")).notify("Ссылка скопирована");
   } catch {}
 }
@@ -30,7 +32,7 @@ async function share() {
   <div class="container page-container">
     <PageLink to="/news/" class="back-link"
       ><Icon name="back" :size="17" />Все публикации</PageLink
-    ><LoadState :loading="loading" :error="error" @retry="reload"
+    ><LoadState :stale="!!data" :loading="loading" :error="error" @retry="reload"
       ><article
         v-if="data"
         class="article-page"
@@ -51,14 +53,14 @@ async function share() {
             ><button
               class="icon-button"
               aria-label="Скопировать ссылку на публикацию"
-              @click="share"
+              @click="share(false)"
             >
               <Icon name="link" :size="18" />
             </button>
           </div>
         </header>
         <img
-          v-if="coverUrl(data)"
+          v-if="coverUrl(data) && (data.kind!=='news' || data.cover_media_id || data.cover==='rublemet')"
           class="article-cover"
           :src="coverUrl(data)"
           alt=""
@@ -76,10 +78,10 @@ async function share() {
             :to="'/workspace/articles/' + data.id + '/'"
             class="inline-link"
             ><Icon name="edit" :size="17" />Редактировать</PageLink
-          ><button class="inline-link" @click="share">
-            <Icon name="copy" :size="17" />Поделиться
+          ><button class="inline-link" @click="share(false)">
+            <Icon name="copy" :size="17" />Скопировать ссылку
           </button>
-        </div>
+          <button class="inline-link" @click="share(true)"><Icon name="link" :size="17"/>Ссылка с превью</button></div>
       </article></LoadState
     >
   </div>

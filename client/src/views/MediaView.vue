@@ -66,6 +66,10 @@ async function upload() {
     busy.value = false;
   }
 }
+async function saveMetadata(item:MediaAsset){
+  if(busy.value)return;busy.value=true;message.value='';
+  try{Object.assign(item,await api<MediaAsset>('/workspace/media/'+item.id,{method:'PATCH',private:true,body:{expected_revision:item.revision,title:item.title,alt:item.alt}}));notify('Подписи изображения сохранены');}catch(e){message.value=errorMessage(e);}finally{busy.value=false;}
+}
 async function publish(item: MediaAsset) {
   if (busy.value) return;
   busy.value = true;
@@ -132,7 +136,7 @@ onMounted(load);
             <span class="badge">{{
               item.published ? "Доступно на сайте" : "Только владелец"
             }}</span>
-            <h2>{{ item.title }}</h2>
+            <label>Название<input v-model="item.title" maxlength="160"/></label><label>Описание изображения<input v-model="item.alt" maxlength="300"/></label><button class="button secondary" :disabled="busy" @click="saveMetadata(item)">Сохранить подписи</button>
             <p>
               {{ item.width }} × {{ item.height }} ·
               {{ item.alt || "Описание не указано" }}
