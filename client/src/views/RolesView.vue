@@ -5,26 +5,28 @@ import { resource } from "../lib/resource";
 import { auth, can, refreshAccess } from "../stores/auth";
 import { notify } from "../stores/notices";
 import { errorMessage } from "../lib/errors";
-import { permissionGroups } from "../lib/content";
 import { permissionDiff, slugify, systemDescriptions } from "../lib/roles";
 import { saveDraft, readDraft, removeDraft } from "../lib/drafts";
 import type { Role, Permission, Page } from "../lib/types";
 import Icon from "../components/Icon.vue";
 import Modal from "../components/Modal.vue";
+import TrashDialog from "../components/TrashDialog.vue";
+import PermissionMatrix from "../components/PermissionMatrix.vue";
 import LoadState from "../components/LoadState.vue";
+const state = ref("active");
 const { data, loading, error, reload } = resource(async () => {
   const [roles, permissions] = await Promise.all([
-    api<Page<Role> & { delegable_permissions: string[] }>("/staff/roles", {
+    api<Page<Role> & { delegable_permissions: string[] }>("/staff/roles?state=" + state.value, {
       private: true,
     }),
     api<Page<Permission>>("/staff/permissions", { private: true }),
   ]);
   return {
     roles: roles.items,
-    permissions: permissions.items,
+    permissions: permissions.items.filter(p => !p.legacy),
     delegable: roles.delegable_permissions,
   };
-});
+}, [state]);
 const editorOpen = ref(false),
   editing = ref<Role | null>(null),
   removing = ref<Role | null>(null),
@@ -61,23 +63,6 @@ const roles = computed(
         .includes(search.value.toLocaleLowerCase("ru")),
     ) || [],
 );
-const groups = computed(() => {
-  const result: Record<string, Permission[]> = {};
-  for (const p of data.value?.permissions || []) {
-    if (
-      permissionSearch.value &&
-      !(p.title + " " + p.id)
-        .toLocaleLowerCase("ru")
-        .includes(permissionSearch.value.toLocaleLowerCase("ru"))
-    )
-      continue;
-    if (selectedOnly.value && !form.permissions.includes(p.id)) continue;
-    (result[p.group] ??= []).push(p);
-  }
-  return Object.entries(result);
-});
-const allowed = (p: Permission) =>
-  !!data.value?.delegable.includes(p.id) && !p.owner_only;
 function setRole(role?: Role, duplicate = false) {
   editing.value = role && !duplicate ? role : null;
   slugTouched.value = !!role && !duplicate;
@@ -133,13 +118,6 @@ function remember() {
     editing: editing.value?.slug || null,
   });
 }
-function toggleGroup(permissions: Permission[]) {
-  const eligible = permissions.filter(allowed).map((p) => p.id),
-    all = eligible.every((p) => form.permissions.includes(p));
-  form.permissions = all
-    ? form.permissions.filter((p) => !eligible.includes(p))
-    : Array.from(new Set([...form.permissions, ...eligible]));
-}
 async function save() {
   busy.value = true;
   try {
@@ -166,16 +144,18 @@ async function save() {
     busy.value = false;
   }
 }
-async function remove() {
+async function remove(payload: {confirmation:string;expected_revision:number;reason:string}) {
   if (!removing.value) return;
   busy.value = true;
   try {
-    await api("/staff/roles/" + removing.value.slug, {
-      method: "DELETE",
+    const restoring = !!removing.value.deleted_at;
+    await api("/staff/roles/" + removing.value.slug + (restoring ? "/restore" : ""), {
+      method: restoring ? "POST" : "DELETE",
+      body: payload,
       private: true,
     });
     removing.value = null;
-    notify("Роль удалена");
+    notify(restoring ? "Роль восстановлена без назначений" : "Роль перемещена в корзину, назначения сняты");
     await reload();
   } catch (e) {
     notify(errorMessage(e), true);
@@ -193,7 +173,7 @@ async function remove() {
         <p>Понятные зоны ответственности для каждого участника.</p>
       </div>
       <button
-        v-if="can('roles.manage_basic')"
+        v-if="can('roles.create_basic')"
         class="button"
         @click="setRole()"
       >
@@ -201,9 +181,10 @@ async function remove() {
       </button>
     </header>
     
+    <div class="filter-tabs"><button :class="{active:state==='active'}" @click="state='active'">Действующие</button><button v-if="can('roles.delete_basic')" :class="{active:state==='deleted'}" @click="state='deleted'">Корзина</button></div>
     <div class="catalog-tools">
       <span class="small muted"
-        >{{ data?.roles.length ?? 0 }} ролей в команде</span
+        >Ролей в списке: {{ data?.roles.length ?? 0 }}</span
       ><label class="search-field compact"
         ><Icon name="search" :size="17" /><input
           v-model="search"
@@ -215,7 +196,7 @@ async function remove() {
     <LoadState :loading="loading" :error="error" @retry="reload"
       ><div class="roles-grid">
         <article
-          v-if="!search || 'owner'.includes(search.toLowerCase())"
+          v-if="state==='active' && (!search || 'owner'.includes(search.toLowerCase()))"
           class="role-card owner-role"
         >
           <div class="role-card-top">
@@ -270,7 +251,7 @@ async function remove() {
             <span class="mono">{{ role.slug }}</span>
             <div class="row-actions">
               <button
-                v-if="role.editable"
+                v-if="!role.deleted_at && can('roles.create_basic')"
                 class="icon-button"
                 :aria-label="'Копировать роль ' + role.title"
                 title="Создать копию роли"
@@ -288,12 +269,12 @@ async function remove() {
               ><button
                 v-if="role.deletable"
                 class="icon-button danger-text"
-                :aria-label="'Удалить роль ' + role.title"
-                title="Удалить роль"
+                :aria-label="(role.deleted_at?'Восстановить роль ':'Удалить роль ') + role.title"
+                :title="role.deleted_at?'Восстановить':'В корзину'"
                 @click="removing = role"
               >
-                <Icon name="delete" :size="17" /></button
-              ><span v-if="!role.editable" class="protected-label"
+                <Icon :name="role.deleted_at?'undo':'delete'" :size="17" /></button
+              ><span v-if="!role.editable && !role.deletable && !can('roles.create_basic')" class="protected-label"
                 ><Icon name="lock" :size="13" />Только Owner</span
               >
             </div>
@@ -388,50 +369,7 @@ async function remove() {
             placeholder="Найти действие или раздел"
             aria-label="Поиск прав"
         /></label>
-        <section
-          v-for="[group, permissions] in groups"
-          :key="group"
-          class="permission-group"
-        >
-          <div>
-            <h4>{{ permissionGroups[group] || group }}</h4>
-            <button
-              type="button"
-              class="text-button small"
-              @click="toggleGroup(permissions)"
-            >
-              {{
-                permissions
-                  .filter(allowed)
-                  .every((p) => form.permissions.includes(p.id))
-                  ? "Снять выбор"
-                  : "Выбрать группу"
-              }}
-            </button>
-          </div>
-          <div class="permission-grid">
-            <label
-              v-for="permission in permissions"
-              :key="permission.id"
-              class="permission-option"
-              :class="{ disabled: !allowed(permission) }"
-              ><input
-                v-model="form.permissions"
-                type="checkbox"
-                :value="permission.id"
-                :disabled="!allowed(permission)" /><span
-                >{{ permission.title
-                }}<small>{{
-                  permission.owner_only
-                    ? "Закреплено за Owner"
-                    : !allowed(permission)
-                      ? "Требует Owner"
-                      : permission.id
-                }}</small></span
-              ><Icon v-if="!allowed(permission)" name="lock" :size="13"
-            /></label>
-          </div>
-        </section>
+        <PermissionMatrix v-model="form.permissions" :permissions="data?.permissions||[]" :delegable="data?.delegable||[]" :search="permissionSearch" :selected-only="selectedOnly"/>
         <div class="role-save-bar">
           <div>
             <strong>{{ form.permissions.length }} прав</strong
@@ -447,27 +385,6 @@ async function remove() {
           </button>
         </div></form
     ></Modal>
-    <Modal
-      :open="!!removing"
-      title="Удалить роль?"
-      :busy="busy"
-      @update:open="!$event && (removing = null)"
-      ><p>
-        Роль «{{ removing?.title }}» будет удалена. Назначенные и системные роли
-        удалить нельзя.
-      </p>
-      
-      <div class="button-row">
-        <button
-          class="button danger"
-          :disabled="busy"
-          @click="remove"
-        >
-          Удалить роль</button
-        ><button class="button secondary" @click="removing = null">
-          Отмена
-        </button>
-      </div></Modal
-    >
+    <TrashDialog :open="!!removing" :title="removing?.deleted_at?'Восстановить роль?':'Удалить роль?'" :target="removing?.slug||''" :revision="removing?.revision||1" :restore="!!removing?.deleted_at" :busy="busy" :description="removing?.deleted_at?'Роль вернётся без назначений. Выдать её участникам можно отдельно.':'Роль «'+(removing?.title||'')+'» будет перемещена в корзину. Все назначения ('+(removing?.assigned_count||0)+') будут сняты сразу. Системные роли защищены.'" @update:open="!$event&&(removing=null)" @confirm="remove"/>
   </div>
 </template>

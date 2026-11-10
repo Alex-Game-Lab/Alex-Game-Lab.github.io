@@ -47,7 +47,7 @@ const groups = computed(() =>
           path: "/workspace/projects/",
           title: "Проекты",
           icon: "projects",
-          allowed: canSome("projects.edit") || can("projects.manage"),
+          allowed: ["projects.edit","projects.edit_any","projects.create","projects.publish","projects.publish_any","projects.assign","projects.assign_assigned","projects.delete","projects.delete_any"].some(p=>canSome(p)),
         },
         {
           path: "/workspace/reports/",
@@ -73,7 +73,7 @@ const groups = computed(() =>
           path: "/workspace/roles/",
           title: "Роли и права",
           icon: "shield",
-          allowed: can("roles.manage_basic") || can("roles.manage"),
+          allowed: ["roles.create_basic","roles.edit_basic","roles.delete_basic","roles.assign_basic"].some(p=>can(p)),
         },
         {
           path: "/workspace/metrics/",

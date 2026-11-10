@@ -67,11 +67,11 @@ const projects = resource(() =>
         ><Icon name="article" /><strong>Публикации</strong
         ><span>Новости, статьи и черновики</span><Icon name="out" /></PageLink
       ><PageLink
-        v-if="canSome('projects.edit') || can('projects.manage')"
+        v-if="['projects.edit','projects.edit_any','projects.create','projects.publish','projects.publish_any','projects.assign','projects.assign_assigned','projects.delete','projects.delete_any'].some(p=>canSome(p))"
         to="/workspace/projects/"
         ><Icon name="projects" /><strong>Проекты</strong
         ><span>Описание, обложка и участники</span><Icon name="out" /></PageLink
-      ><PageLink v-if="can('roles.manage_basic')" to="/workspace/roles/"
+      ><PageLink v-if="['roles.create_basic','roles.edit_basic','roles.delete_basic','roles.assign_basic'].some(p=>can(p))" to="/workspace/roles/"
         ><Icon name="shield" /><strong>Роли и права</strong
         ><span>Понятные правила доступа</span><Icon name="out" /></PageLink
       ><PageLink
