@@ -198,7 +198,7 @@ if (restored) {
           >Участник<select v-if="users.length" v-model="account">
             <option value="" disabled>Выбери аккаунт</option>
             <option v-for="user in users" :value="user.id">
-              {{ user.display_name || "Участник AGL" }} ·
+              {{ user.username || user.display_name || "Аккаунт" }} ·
               {{ user.id.slice(0, 8) }}
             </option></select
           ><input v-else v-model="account" placeholder="ID аккаунта" /></label

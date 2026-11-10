@@ -91,6 +91,7 @@ export interface Permission {
 }
 export interface UserSummary {
   id: string;
+  username?: string;
   display_name: string;
   locale: string;
   created_at: string;

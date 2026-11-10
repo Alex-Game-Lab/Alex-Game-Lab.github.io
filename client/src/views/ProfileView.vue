@@ -3,6 +3,7 @@ import PageLink from "../components/PageLink.vue";
 import { ref, reactive, watch, computed } from "vue";
 import {
   auth,
+  accountName,
   login,
   logout,
   refreshAccess,
@@ -63,7 +64,7 @@ watch(
   },
   { immediate: true },
 );
-const name = computed(() => auth.profile?.display_name || "Твой профиль");
+const name = computed(() => accountName.value);
 async function save() {
   saving.value = true;
   try {
@@ -131,7 +132,7 @@ async function showSaves(game: Game) {
               <span v-if="auth.access?.owner" class="badge owner"
                 ><Icon name="crown" :size="13" />Owner</span
               ><span
-                v-for="role in auth.access?.roles"
+                v-for="role in auth.access?.roles.filter(r=>r.slug!=='owner')"
                 :key="role.slug"
                 class="badge role-badge"
                 :style="{ '--role-color': role.color || '#B6A3F5' }"

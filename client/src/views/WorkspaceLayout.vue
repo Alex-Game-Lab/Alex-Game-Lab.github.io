@@ -2,7 +2,7 @@
 import { computed, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import PageLink from "../components/PageLink.vue";
-import { auth, login, hasWorkspace, canSome, can } from "../stores/auth";
+import { auth, accountName, login, hasWorkspace, canSome, can } from "../stores/auth";
 import Icon from "../components/Icon.vue";
 import EmptyState from "../components/EmptyState.vue";
 const route = useRoute(),
@@ -164,7 +164,7 @@ const groups = computed(() =>
             ><Icon :name="auth.access?.owner ? 'crown' : 'user'"
           /></span>
           <div>
-            <strong>{{ auth.profile?.display_name || "Участник AGL" }}</strong
+            <strong>{{ accountName }}</strong
             ><span>{{
               auth.access?.owner
                 ? "Владелец"

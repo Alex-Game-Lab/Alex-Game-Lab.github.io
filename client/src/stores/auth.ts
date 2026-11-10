@@ -17,6 +17,7 @@ export const auth = reactive<{
   loading: boolean;
   ready: boolean;
 }>({ user: null, profile: null, access: null, loading: true, ready: false });
+export const accountName = computed(()=>{const nick=auth.user?.profile.preferred_username;return typeof nick==='string'&&nick&&!nick.toLowerCase().startsWith('tel_')&&!nick.toLowerCase().startsWith('phone_')&&!nick.includes('@')?nick:auth.profile?.display_name||'Профиль';});
 let current: UserManager | null = null;
 let renewing: Promise<User | null> | null = null;
 export function makeManager(client = "agl-web") {
