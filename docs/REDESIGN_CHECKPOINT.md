@@ -1,6 +1,8 @@
-# AGL redesign — stage 1 checkpoint
+# AGL and portfolio — redesign checkpoint
 
 Updated: 10 November 2026 (Moscow). Plan: AGL_full_redesign_plan_2026-11-09.md, Library file libfile_53b4620372f4819196fd3a44226545a4.
+
+Current state: stages 1 and 2 are released on the existing production hosts. The stage 1 sections below are historical; the stage 2 corrections and final release table supersede their public copy, personal-contact references and remaining implementation list.
 
 ## Scope implemented
 
@@ -75,7 +77,7 @@ Rollback: a previous frontend can use the additive server contract. Keep migrati
 
 No release blocker remains for the stage 1 scope. Stage 2 must complete the public AGL and personal redesign, new art/motion, remaining editable pages and legacy project consolidation. Do not repeat the full audit or the completed fast test set without new changes or a specific failure.
 
-## Stage 2 — implementation in progress, 10 November 2026
+## Stage 2 — released implementation, 10 November 2026
 
 Branches: `feat/redesign-stage2-20261110` in all affected repositories. Bases: AGL `8760f16`, backend `7d01bb6`, personal `f05a03f`.
 
@@ -90,3 +92,50 @@ The latest owner corrections supersede the earlier contact and introductory-copy
 - Data inventory from schemas is recorded in backend `docs/DATA_INVENTORY_2026-11-10.md`; a factual public data notice replaces the obsolete no-account claim. Formal operator details, retention/deletion rules and a working request channel remain to be established.
 
 Exactly three generated originals are integrated as optimized assets, with source prompts/references in `docs/REDESIGN_ART.md`. Personal-site art has its own provenance copy. Browser-width tests will be reported separately from physical mobile verification.
+
+
+### Stage 2 validation and release notes
+
+- Backend source `3d0e7b60ca940906783baeff03c089147f243296`, merged/released `117ff75b4fe2427d1179ae6ddd29434e6d7e55c9`, PR [#8](https://github.com/Alex-Game-Lab/backend/pull/8). Backend check run 42757794182 and production run 42757996743 succeeded. No schema migration beyond 0005 was needed.
+- Public API returned HTTP 200 for both site bundles (6 AGL and 7 portfolio documents), published page/article HTML snapshots and date-filtered news. The actual CORS response permits `https://akaalexey.ru`. New server contract was verified before merging the dependent clients.
+- AGL source `d4f024537bd0e7c91b0866bb0f2f4ffb29858d3a`, PR [#9](https://github.com/Alex-Game-Lab/Alex-Game-Lab.github.io/pull/9). Both push/PR Vue checks passed: 42759917048, 42759922564. Local final artifact: 29 pages / 310 references. Main JS `index-eO39EN_F.js`, CSS `index-0P2jGTfC.css`.
+- Portfolio source `ec98082760900c27594fd71bfc69502d4e47adee` in PR [#1](https://github.com/akaAlexey/akaalexey/pull/1), then `0672fdeec8ea82fd6a37b602d79f31014088cfc2` in PR [#2](https://github.com/akaAlexey/akaalexey/pull/2) adds deterministic asset version queries for returning visitors. Generator/link checks: 8 pages / 164 references; JavaScript syntax passed. First release run 42759468711 succeeded; final release evidence follows below.
+- Three generated originals plus optimized derivatives are used in real pages. Original references, prompts, filenames/dimensions and byte budgets are in `docs/REDESIGN_ART.md` and personal `site/docs/REDESIGN_ART.md`. No additional generation was performed.
+- Short browser review used actual Vue components with public snapshots and synthetic Owner transport, and the built portfolio in a local mount. The fixture is ignored under `client/.openai/` and is not in production. Reviewed AGL/news/profile at desktop/390 px, portfolio at 1440/390 px and both themes, home→case→contact navigation, and a 320 px stress case. No horizontal overflow in measured 375/305/753 px inner viewports.
+- News first heading starts at y≈200 CSS px in the 390 px frame; toolbar height 57 px. The search field replaces the filter row on narrow screens without adding a new vertical block.
+- Owner page editor at tablet 768 px: input 16 px; selected personal/about, saved revision 1, published revision 2, restored the previous content and published revision 4. Server rights/persistence/conflicts were tested separately against PostgreSQL in CI. No real production test post, account or Owner draft was created.
+- A simulated HTTP 503 retained the visible published news snapshot; one retry cleared the error. Prior stage 1 text-preservation and registration/PKCE/profile checks remain applicable; no auth client, subject mapping or Android return logic changed.
+- Removed direct personal Telegram links and first-name introductions from both rendered sites, including the 404 fallback. The first publication's author/body/ID/URL are not rewritten.
+
+### Actual remaining work and verification limits
+
+1. The administration Telegram bot is a future integration requested by the owner, not a working feature of this release. It needs a real bot identity/configuration and inbox access before incoming messages or automated replies can be implemented. No Telegram messages were sent.
+2. The data notice now describes actual account-related storage. A complete legal operator policy still requires verified operator details, retention/deletion rules and a working request channel; none were invented. See backend `docs/DATA_INVENTORY_2026-11-10.md`.
+3. Canonical GitHub Pages HTML carries release-time metadata. Content updates through Owner are immediate in the live UI; always-current share HTML/OG is available at `/v1/previews/{site}/{page}` and `/v1/previews/news/{slug}`. The editor and article page expose these share snapshots. Canonical static metadata changes with the next ordinary Pages build; this static-host limitation is not hidden.
+4. Physical Android/Yandex keyboard, Android app return and Safari/iPhone were not exercised on a device. Native callback and assetlinks source bytes are unchanged. Field LCP/INP/CLS have not been measured. No full Docker/e2e suite was run.
+
+No domain or hosting-workflow changes were made. The remaining items above are separate integrations, legal input and physical/field verification, not unpublished source for the main redesign.
+
+### Stage 2 final production verification
+
+Verified on 10 November 2026, 05:18 UTC / 08:18 Moscow. All redesign implementation PRs below are merged; this checkpoint is a later documentation-only commit and does not identify a new application release.
+
+| Component | Production code revision | Release evidence |
+| --- | --- | --- |
+| API and Keycloak | `117ff75b4fe2427d1179ae6ddd29434e6d7e55c9`, source `3d0e7b60ca940906783baeff03c089147f243296`; [PR #8](https://github.com/Alex-Game-Lab/backend/pull/8) | [Production run 42757996743](https://github.com/Alex-Game-Lab/backend/actions/runs/42757996743): quick API tests and deploy-vps succeeded. 67 tests passed in 7.78 seconds; full stack was intentionally skipped. |
+| Public AGL and workspace | `5a2d299442a54ae2dc9aa0b27fe9a0bbcc92f8a8`, source `d4f024537bd0e7c91b0866bb0f2f4ffb29858d3a`; [PR #9](https://github.com/Alex-Game-Lab/Alex-Game-Lab.github.io/pull/9) | [Main checks 42760347108](https://github.com/Alex-Game-Lab/Alex-Game-Lab.github.io/actions/runs/42760347108) and [Pages release 42760347373](https://github.com/Alex-Game-Lab/Alex-Game-Lab.github.io/actions/runs/42760347373) succeeded. Actual HTML loads `index-eO39EN_F.js` / `index-0P2jGTfC.css`. |
+| Personal portfolio | `156d06c7a07103ead6ef57dc7afeb6651c572154`, source `0672fdeec8ea82fd6a37b602d79f31014088cfc2`; PRs [#1](https://github.com/akaAlexey/akaalexey/pull/1) and [#2](https://github.com/akaAlexey/akaalexey/pull/2) | [Pages release 42760352555](https://github.com/akaAlexey/akaalexey/actions/runs/42760352555) succeeded. Actual HTML uses fingerprint `616bc9f0e568` on theme/site CSS/JS assets. |
+
+Live acceptance observations:
+
+- `https://alexgamelab.ru/`, `/news/`, the original first-post URL, both Rublemet paths and `https://akaalexey.ru/` returned HTTP 200. Generated WebP assets from both hosts also returned HTTP 200.
+- The production browser shows the compact project/date/search row immediately above the first news title, with no marketing hero or type tabs. The personal homepage identifies the author as `akaalexey`, without the first-name introduction or direct personal Telegram link.
+- Public `/profile/` now shows only AGL ID, login/registration actions, the nickname/password/optional-email note and the data notice link. A read-only visit to the actual production Keycloak registration form confirmed nickname/password/optional email, 16 px inputs, username/new-password/email autocomplete and the explicit statement that recovery/confirmation mail is not sent. No credentials were entered and no production signup was submitted.
+- The existing first publication matches the captured original in ID, slug, title, excerpt, body, author, creation/update/publication dates and revision; `kind=news` remains intact.
+- `/games/rublemet/` and `/projects/rublemet/` serve the same page with canonical `https://alexgamelab.ru/projects/rublemet/`. The original first-news link has its own static HTTP 200 shell and post-specific metadata.
+- Android callback and assetlinks returned HTTP 200 and exactly matched their preserved source bytes. SHA-256: callback `754972ed20551848aa55622ed532af88fecbb1badfbb3ca42113a38d2c33661c`; assetlinks `70969c34eb9846dfe131192807fda49179336b1eb5a9f75bbae2bf3a6e166348`. This is compatibility evidence, not a physical Android app-return test.
+- Both public content bundles respond with the published defaults/snapshots. The 13-page Owner editor is reached at `https://alexgamelab.ru/workspace/content/`; media metadata and uploaded images at `/workspace/media/`. Private drafts require the current Owner session; ordinary actions do not request the password again.
+
+Acceptance totals remain one final TypeScript/Vite build plus four helper tests and 29-page / 310-reference Pages validation for AGL, the 8-page / 164-reference generator check plus JavaScript syntax for the portfolio, and the targeted backend suite above. No additional full audit, Docker suite or broad e2e run was added. The actual production browser review supplements, rather than relabels, the isolated tablet/narrow-width checks.
+
+Next work must start from the four explicit remaining items above (administration bot, verified legal policy inputs, canonical static metadata delivery, physical/field checks), not repeat the redesign or publish test content into production.
