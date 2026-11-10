@@ -2,7 +2,7 @@
 
 Updated: 10 November 2026 (Moscow). Plan: AGL_full_redesign_plan_2026-11-09.md, Library file libfile_53b4620372f4819196fd3a44226545a4.
 
-Current state: stages 1 and 2 are released on the existing production hosts. The stage 1 sections below are historical; the stage 2 corrections and final release table supersede their public copy, personal-contact references and remaining implementation list.
+Current state: stages 1 and 2 and the access/Player follow-up below are released on the existing production hosts. The stage 1 sections below are historical; the stage 2 corrections and final release table supersede their public copy, personal-contact references and remaining implementation list.
 
 ## Scope implemented
 
@@ -139,3 +139,51 @@ Live acceptance observations:
 Acceptance totals remain one final TypeScript/Vite build plus four helper tests and 29-page / 310-reference Pages validation for AGL, the 8-page / 164-reference generator check plus JavaScript syntax for the portfolio, and the targeted backend suite above. No additional full audit, Docker suite or broad e2e run was added. The actual production browser review supplements, rather than relabels, the isolated tablet/narrow-width checks.
 
 Next work must start from the four explicit remaining items above (administration bot, verified legal policy inputs, canonical static metadata delivery, physical/field checks), not repeat the redesign or publish test content into production.
+
+
+## Access management and Player follow-up — 10 November 2026
+
+This follow-up supersedes earlier multi-role UI descriptions. Work stayed in the existing Vue/API/Keycloak repositories; the personal site and the Owner's public text were not redesigned again.
+
+### Implemented behavior
+
+- Project permissions are an action/scope matrix: edit, publish/hide, manage members and delete/restore, each for trusted or all projects. Creation is separate. Developer membership or an explicit per-project grant defines trusted scope; tester membership alone confers no management. Personal denials and bans remain effective.
+- Role creation, editing, assignment and deletion are separate. Review editing no longer implicitly controls deletion. Existing grants were translated without silently removing earlier capabilities. Newly introduced project/account deletion and note-mutation permissions initially belong only to Owner until explicitly granted.
+- Projects, custom roles and accounts have revision-checked trash/restore with target confirmation, stated effects, reasons and audit records. Projects return unpublished; related materials and game saves remain. System roles and the pinned Owner account are protected. The acting account cannot delete itself.
+- Staff account cards show the registration nickname separately from the chosen profile name, IDs, existing profile fields, creation/update dates, version, one role, project memberships, restrictions, personal grants and existing-record counts. An update date is not labelled last login. Passwords, Keycloak email and save contents are not exposed.
+- Private notes use separate create, edit-own, delete-own, edit-others and delete-others rights. Text, deleted-note lists and counts are visible only to the note author, Admin and Owner. Others' note IDs return 404; ordinary account-read permission exposes no colleagues' note text. Admin visibility does not confer edit/delete rights; others' mutation rights work only for Admin. Owner-authored notes stay Owner-protected.
+- Note saves are explicit, revision checked and recoverable from account-scoped session drafts. A failed save preserves the input. Audit records note IDs/actions/revisions/reasons, never note text. Public profiles, authors and account lists contain no private notes.
+- Every account now has exactly one role. System Player (`player`, «Игрок») is the default; the configured Owner identity remains pinned to Owner. Removing a custom role resets its accounts to Player. Earlier multiple-role combinations are converted to one custom role with the same permission union, preserving derived Admin visibility and protection. A database unique constraint enforces at most one assignment; empty legacy selections reset to Player.
+- Own-profile/save abilities are base account capabilities, not role-editor switches. The misleading own-profile control is excluded from the editable matrix.
+- Private registration nicknames refresh from the signed `preferred_username` claim and are backfilled for existing profiles through the existing bootstrap stdin transport. No new admin credential is persisted in API configuration. Phone-derived/email identifiers are excluded. Staff lists and selectors show the registered nickname first; selected display names and public author names are preserved. `/me` response shape used by Android is unchanged.
+
+### Code, migrations and release evidence
+
+Branches: `feat/scoped-access-notes-20261110` and `feat/player-role-nicknames-20261110` in both repositories.
+
+| Component | Final code release | Evidence |
+| --- | --- | --- |
+| API / identity metadata | `aebf69c10a59e7b5892d48ffe3a195b6c459d8ff`; Player source `e215c79a33969aae3a72d5e73ffbb0a7170bc049` | Backend PRs [#9](https://github.com/Alex-Game-Lab/backend/pull/9), [#10](https://github.com/Alex-Game-Lab/backend/pull/10), [#11](https://github.com/Alex-Game-Lab/backend/pull/11). [Final release 42808503076](https://github.com/Alex-Game-Lab/backend/actions/runs/42808503076): 74 quick tests passed in 12.28 seconds, deploy-vps passed, private schema and public HTTPS readiness verified. Nickname sync completed and updated one existing profile. |
+| AGL client | `dd351d7936cb86151148616d342f988ffaa5064d`; Player source `a7ebc7828766f5bd6291e46bb52b742f7c469fed` | Frontend PRs [#11](https://github.com/Alex-Game-Lab/Alex-Game-Lab.github.io/pull/11), [#12](https://github.com/Alex-Game-Lab/Alex-Game-Lab.github.io/pull/12). Branch checks 42808755626 and 42808748372 passed. [Final Pages release 42809000241](https://github.com/Alex-Game-Lab/Alex-Game-Lab.github.io/actions/runs/42809000241), [main client checks 42809000410](https://github.com/Alex-Game-Lab/Alex-Game-Lab.github.io/actions/runs/42809000410) and built-in Pages run 42808999864 all succeeded. |
+
+Migrations `0006_scoped_access_notes` and `0007_player_identity` are additive and applied through the existing deployment process, with a private pre-migration dump. Runtime grants include the private notes table. No schema downgrade or restoration was performed. The readiness probe was corrected from the previous hard-coded schema revision; the final fast suite now checks real `/health/ready` so the mismatch cannot pass unnoticed. Final readiness expects `0007_player_identity`.
+
+### Acceptance and limits
+
+- Final TypeScript/Vite build passed; existing four helper tests passed in the access implementation. The combined final Pages artifact passed 29 pages / 310 references. The latest Player follow-up uses the native single-choice select; no extra image generation or full Docker/e2e run was needed.
+- Short isolated browser review used actual Vue components and synthetic Owner transport: tablet role matrix at 768 px, saving an independent trusted-project deletion grant, deleting an assigned custom role and opening/restoring it from trash, account details and private notes at 390 px, a 320 px stress case, and desktop project actions/confirmation at 1440 px. Measured document widths matched 768/390/320 px without horizontal overflow; the note field was 16 px. A simulated 503 left the text intact and one retry saved it. Server privacy, scope, revisions and persistence were tested separately against signed identities and PostgreSQL in CI.
+- No production test users, posts, notes or deletion actions were created. The production browser was logged out; a private production Owner session was not used. Physical Android/iPhone, native app return and field performance were not re-tested. Native callback and assetlinks sources are unchanged.
+- The Owner's current published AGL page editions (home/projects/project-rublemet revision 2, remaining pages revision 0) were captured as static fallbacks and matched the public API after release. Their prose was not rewritten. The earlier first-post snapshot was found stale: the Owner had already published revision 15 at 08:16 UTC with the 11 November announcement. The public JSON snapshot is refreshed verbatim from that published edition; no article mutation request was made.
+- Account trash closes application/API access, including existing tokens, and preserves records for restoration. It is not permanent Keycloak identity/credential erasure; the UI says this before confirmation. A complete identity-erasure/retention process remains separate.
+
+User guide: `docs/ACCESS_MANAGEMENT.md`; API/security behavior: backend `docs/ACCESS_AND_ACCOUNT_NOTES.md`. Earlier stage 2 remaining items (administration bot, verified legal policy inputs, canonical static metadata refresh and physical/field checks) remain separate. No Telegram messages or domain changes were made.
+
+Final follow-up release time recorded: 2026-11-10 14:42 MSK. Live API readiness returned HTTP 200 after the Player deployment.
+
+Final public HTTP acceptance before the snapshot refresh: role/user route shells and the native one-role UI bundle returned 200; API readiness returned 200; Owner page data matched all six captured editions; callback and assetlinks bytes matched preserved sources. Final Player bundle at that point: `index-C7-lmOFC.js`, CSS `index-BJsMSgrw.css`. A later snapshot-only frontend release is recorded below.
+
+Published-news snapshot refresh: source `23269c44040c798e13240a2cfaec6115fcf4c2bb`, [frontend PR #13](https://github.com/Alex-Game-Lab/Alex-Game-Lab.github.io/pull/13), captures the existing first post at revision 15 and the other published post at revision 14 verbatim from the API. Final rebuilt artifact: 30 pages / 322 references, TypeScript/Vite passed. Expected bundle: `index-CDz88iGa.js`; CSS remains `index-BJsMSgrw.css`. This changes fallback snapshots/static metadata only; it does not write articles or change the already-published role/identity contract.
+
+Snapshot release verified: frontend main `3ca9e2422d39d1f7a9e570902b88afbe59db7bfc`; [Pages release 42810713538](https://github.com/Alex-Game-Lab/Alex-Game-Lab.github.io/actions/runs/42810713538), [main Vue checks 42810713508](https://github.com/Alex-Game-Lab/Alex-Game-Lab.github.io/actions/runs/42810713508) and built-in Pages run 42810713181 succeeded. This is the final published frontend artifact for the follow-up; the earlier `dd351d7` entry identifies the unchanged Player/account feature code. A subsequent documentation-only commit does not identify another application release.
+
+Final checkpoint recorded 2026-11-10 14:53 MSK. No pending implementation PR remains for the requested scoped rights, one-role default, nickname display, account notes or reversible deletion. Permanent identity erasure and physical-device verification remain the explicit limits above.
