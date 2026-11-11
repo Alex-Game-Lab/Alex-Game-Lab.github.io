@@ -5250,3 +5250,5 @@ body {
     min-height: 44px;
   }
 }
+
+.key-note{display:inline-block;max-width:20ch;margin-inline-start:.6em;padding:.15em .5em;border-radius:5px;background:var(--surface2);color:var(--accent,#c2fd78);font-size:.78rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;vertical-align:middle}.member-candidates{max-height:240px;overflow-y:auto;border:1px solid var(--line);border-radius:10px;padding:6px}.member-candidates button{display:block;text-align:left;width:100%;padding:12px;background:transparent;color:inherit;border:0;border-radius:6px}.member-candidates button:hover,.member-candidates button:focus-visible{background:var(--surface2)}.member-candidates p{padding:10px}.player-saves .section-title{display:flex;align-items:center;justify-content:space-between;gap:12px}.player-saves .save-slot{display:block;margin-block:16px}.player-saves textarea{max-width:100%}

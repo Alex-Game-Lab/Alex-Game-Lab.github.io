@@ -37,6 +37,7 @@ export const labels: Record<string, string> = {
   critical: "Критическая",
 };
 export const permissionGroups: Record<string, string> = {
+  project_membership: "Допуск к участию в проектах",
   profile: "Профиль",
   saves: "Сохранения",
   stats: "Личные показатели",

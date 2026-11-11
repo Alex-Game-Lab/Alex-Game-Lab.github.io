@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import PageLink from "../components/PageLink.vue";
-import { ref, reactive, watch } from "vue";
+import { ref, reactive, watch, onBeforeUnmount } from "vue";
 import { api } from "../lib/api";
 import { resource } from "../lib/resource";
 import { auth, can, canSome, refreshAccess } from "../stores/auth";
@@ -26,7 +26,7 @@ const editor = ref(false),
   busy = ref(false),
   slugTouched = ref(false),
   selected = ref<Project | null>(null),
-  members = ref<{ account_id: string; kind: string }[]>([]),
+  members = ref<{ account_id: string; kind: string; username:string; display_name:string; key_note:string; eligible:boolean }[]>([]),
   users = ref<UserSummary[]>([]),
   memberId = ref(""),
   memberKind = ref("developer");
@@ -124,26 +124,23 @@ async function save() {
     busy.value = false;
   }
 }
-async function openMembers(project: Project) {
-  selected.value = project;
-  try {
-    const [m, u] = await Promise.all([
-      api<Page<{ account_id: string; kind: string }>>(
-        "/workspace/projects/" + project.slug + "/members",
-        { private: true },
-      ),
-      api<Page<UserSummary>>("/staff/users?limit=50", { private: true }).catch(
-        () => ({ items: [] }),
-      ),
-    ]);
-    members.value = m.items;
-    users.value = u.items;
-  } catch (e) {
-    notify(errorMessage(e), true);
-  }
+const memberSearch=ref(""), candidatesOpen=ref(false), candidatesLoading=ref(false), candidateError=ref("");
+let candidateTimer:ReturnType<typeof setTimeout>, candidateRequest=0;
+async function findCandidates(){
+  if(!selected.value)return;
+  const request=++candidateRequest;
+  candidatesLoading.value=true;candidateError.value="";
+  try{const result=await api<{items:UserSummary[]}>("/workspace/projects/"+selected.value.slug+"/member-candidates?kind="+memberKind.value+"&search="+encodeURIComponent(memberSearch.value),{private:true});if(request===candidateRequest)users.value=result.items;}
+  catch(e){if(request===candidateRequest){users.value=[];candidateError.value=errorMessage(e)}}
+  finally{if(request===candidateRequest)candidatesLoading.value=false}
 }
+watch(memberSearch,()=>{if(!candidatesOpen.value&&memberId.value)return;memberId.value="";users.value=[];candidateRequest++;clearTimeout(candidateTimer);if(candidatesOpen.value)candidateTimer=setTimeout(findCandidates,250)});
+watch(memberKind,()=>{memberId.value="";users.value=[];clearTimeout(candidateTimer);void findCandidates()});
+function chooseCandidate(user:UserSummary){candidatesOpen.value=false;memberSearch.value=user.username||user.display_name;clearTimeout(candidateTimer);memberId.value=user.id;candidateError.value="";}
+onBeforeUnmount(()=>{clearTimeout(candidateTimer);candidateRequest++});
+async function openMembers(project:Project){selected.value=project;try{const result=await api<{items:typeof members.value}>("/workspace/projects/"+project.slug+"/members",{private:true});members.value=result.items;await findCandidates();}catch(e){notify(errorMessage(e),true)}}
 async function modifyMembers(removeId?: string) {
-  if (!selected.value) return;
+  if (!selected.value || (!removeId&&!memberId.value)) return;
   busy.value = true;
   try {
     await api(
@@ -160,7 +157,7 @@ async function modifyMembers(removeId?: string) {
       },
     );
     await openMembers(selected.value);
-    memberId.value = "";
+    memberId.value = "";memberSearch.value="";candidatesOpen.value=false;
     notify("Участники проекта обновлены");
     await refreshAccess();
   } catch (e) {
@@ -365,11 +362,10 @@ async function release(project: Project) {
         <span class="avatar small"><Icon name="user" :size="17" /></span>
         <div>
           <strong>{{
-            users.find((u) => u.id === member.account_id)?.username ||
-            users.find((u) => u.id === member.account_id)?.display_name ||
+            member.username || member.display_name ||
             "Участник AGL"
-          }}</strong>
-          <p>
+          }}</strong><span v-if="member.key_note" class="key-note">{{member.key_note}}</span>
+          <p v-if="!member.eligible" class="danger-text">Текущая роль больше не допускает это назначение.</p><p>
             {{ member.kind === "developer" ? "Разработчик" : "Тестировщик" }} ·
             {{ member.account_id.slice(0, 8) }}
           </p>
@@ -385,24 +381,14 @@ async function release(project: Project) {
       </div>
       <form class="form-stack inset-form" @submit.prevent="modifyMembers()">
         <h3>Добавить участника</h3>
-        <label v-if="users.length"
-          >Аккаунт<select v-model="memberId" required>
-            <option value="" disabled>Выбери участника</option>
-            <option v-for="user in users" :key="user.id" :value="user.id">
-              {{ user.username || user.display_name || "Аккаунт" }} · {{ user.id.slice(0, 8) }}
-            </option>
-          </select></label
-        ><label v-else
-          >ID аккаунта<input
-            v-model="memberId"
-            required
-            placeholder="UUID из профиля участника" /></label
-        ><label
+        <label>Аккаунт<input v-model="memberSearch" type="search" maxlength="80" placeholder="Логин или ключевая заметка" role="combobox" aria-controls="member-candidates" :aria-expanded="candidatesOpen" aria-autocomplete="list" autocomplete="off" @focus="candidatesOpen=true;findCandidates()" @keydown.escape="candidatesOpen=false" @keydown.down.prevent="($refs.candidateList as HTMLElement)?.querySelector('button')?.focus()"/></label>
+        <div v-if="candidatesOpen" id="member-candidates" ref="candidateList" class="member-candidates" role="listbox" aria-label="Подходящие аккаунты"><p v-if="candidatesLoading" role="status">Ищем…</p><p v-else-if="candidateError" role="alert">{{candidateError}}</p><p v-else-if="!users.length">Подходящих аккаунтов нет. Проверь допуски в роли.</p><button v-for="user in users" :key="user.id" type="button" role="option" :aria-selected="memberId===user.id" @click="chooseCandidate(user)"><strong>{{user.username||user.display_name}}</strong><span v-if="user.key_note" class="key-note">{{user.key_note}}</span></button></div>
+        <p v-if="memberId" class="field-note">Выбран: {{memberSearch}}</p><label
           >Роль в проекте<select v-model="memberKind">
             <option value="developer">Разработчик</option>
             <option value="tester">Тестировщик</option>
           </select></label
-        ><button class="button" :disabled="busy">
+        ><button class="button" :disabled="busy||!memberId">
           Назначить на проект<Icon name="plus" :size="17" />
         </button></form
     ></Modal>
