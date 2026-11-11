@@ -50,6 +50,11 @@ export function errorMessage(error: unknown): string {
         project_is_immutable:
           "Изменить проект у этой статьи может только Owner.",
         expiry_must_be_future: "Укажи дату окончания в будущем.",
+        project_membership_not_allowed_by_role: "Эта роль не позволяет назначить аккаунт выбранным участником проекта.",
+        save_revision_conflict: "Игра или другой сотрудник уже изменили сохранение. Обнови данные и повтори правку.",
+        invalid_rublemet_save: "Сохранение содержит некорректные данные игры.",
+        testing_save_not_allowed: "Тестовый прогресс нельзя записать в обычное сохранение.",
+        use_save_editor: "Измени реальные данные во вкладке сохранений игрока.",
         stats_out_of_range: "Изменение выходит за допустимые границы.",
         operation_id_conflict: "Операция с таким номером уже выполнена.",
       } as Record<string, string>

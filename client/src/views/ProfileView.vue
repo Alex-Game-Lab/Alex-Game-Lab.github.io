@@ -289,9 +289,9 @@ async function showSaves(game: Game) {
           <div>
             <h3>{{ game.title }}</h3>
             <p>Облачные сохранения аккаунта</p>
-            <span v-if="stats[game.slug]" class="small muted"
+            <span v-if="stats[game.slug]?.source==='game_save'" class="small muted"
               >Баланс:
-              {{ stats[game.slug].balance.toLocaleString("ru-RU") }}</span
+              {{ stats[game.slug].balance.toLocaleString("ru-RU") }} ₽</span
             >
           </div>
           <button class="button secondary small" @click="showSaves(game)">

@@ -92,6 +92,7 @@ export interface Permission {
 export interface UserSummary {
   id: string;
   username?: string;
+  key_note?: string;
   display_name: string;
   locale: string;
   created_at: string;
@@ -108,7 +109,7 @@ export interface UserDetail extends UserSummary {
   projects:{slug:string;title:string;kind:string;deleted_at:string|null}[];
   activity:Record<string,number>;
   effective_permissions:string[];
-  capabilities:{delete:boolean;assign_roles:boolean;moderate:boolean;notes_create:boolean};
+  capabilities:{delete:boolean;assign_roles:boolean;moderate:boolean;notes_create:boolean;key_note:boolean};
 }
 export interface AccountNote {
   id:string;account_id:string;author_id:string;author:string;body:string;revision:number;
@@ -154,7 +155,13 @@ export interface Game {
   title: string;
   status: string;
 }
+export interface CloudSave {
+  game_slug:string;slot:number;revision:number;schema_version:number;updated_at:string;
+  payload:{format?:string;state:any;[key:string]:unknown};
+}
 export interface Stats {
+  source?:string;
+  updated_at?:string;
   account_id: string;
   game_slug: string;
   balance: number;

@@ -14,7 +14,7 @@ const { data, loading, error, reload } = resource(
     api<
       Page<{
         id: string;
-        actor_id: string;
+        actor_id: string;actor_username?:string;actor_key_note?:string;
         action: string;
         target_kind: string;
         target_id: string;
@@ -33,6 +33,8 @@ const actions: Record<string, string> = {
   "role.create": "Создана роль",
   "role.update": "Изменена роль",
   "role.delete": "Удалена роль",
+  "account.key_note": "Изменена ключевая заметка",
+  "player.save.edit": "Изменено сохранение игрока",
   "account.roles": "Назначены роли",
   "permission.override.create": "Добавлено персональное правило",
   "permission.override.delete": "Удалено персональное правило",
@@ -85,7 +87,7 @@ const actions: Record<string, string> = {
             ><span
               ><strong>{{ actions[item.action] || item.action }}</strong
               ><small
-                >{{ date(item.created_at) }} · {{ item.target_kind }} ·
+                >{{date(item.created_at)}} · {{item.actor_username||item.actor_id.slice(0,8)}}<span v-if="item.actor_key_note" class="key-note">{{item.actor_key_note}}</span> · {{item.target_kind}} ·
                 {{ item.target_id.slice(0, 18) }}</small
               ></span
             ><Icon name="down" :size="16" />
@@ -94,7 +96,7 @@ const actions: Record<string, string> = {
             <dl>
               <div>
                 <dt>Участник</dt>
-                <dd class="mono">{{ item.actor_id }}</dd>
+                <dd class="mono">{{ item.actor_username||item.actor_id }}<span v-if="item.actor_key_note" class="key-note">{{item.actor_key_note}}</span></dd>
               </div>
               <div>
                 <dt>Объект</dt>

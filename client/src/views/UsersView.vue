@@ -19,8 +19,10 @@ import Icon from "../components/Icon.vue";
 import LoadState from "../components/LoadState.vue";
 import Modal from "../components/Modal.vue";
 import Pagination from "../components/Pagination.vue";
+import PlayerSaves from "../components/PlayerSaves.vue";
 import AccountNotes from "../components/AccountNotes.vue";
 import TrashDialog from "../components/TrashDialog.vue";
+const keyNote=ref("");
 const state=ref("active"), trashOpen=ref(false);
 const search = ref(""),
   query = ref(""),
@@ -78,6 +80,7 @@ async function open(user: UserSummary) {
     selected.value = await api<UserDetail>("/staff/users/" + user.id, {
       private: true,
     });
+    keyNote.value = selected.value.key_note || "";
     selectedRole.value = selected.value.roles?.[0] || "player";
     tab.value = "overview";
   } catch (e) {
@@ -108,6 +111,8 @@ watch(state,()=>offset.value=0);
 async function trashAccount(payload:{confirmation:string;expected_revision:number;reason:string}){if(!selected.value)return;const row=selected.value;await perform(async()=>{await api("/staff/users/"+row.id+(row.deleted_at?"/restore":""),{private:true,method:row.deleted_at?"POST":"DELETE",body:payload});trashOpen.value=false;},row.deleted_at?"Аккаунт восстановлен":"Аккаунт перемещён в корзину");}
 const expiry = (value: string) =>
   value ? new Date(value).toISOString() : null;
+async function saveKeyNote(){if(!selected.value)return;await perform(()=>api("/staff/users/"+selected.value!.id+"/key-note",{private:true,method:"PATCH",body:{key_note:keyNote.value,expected_revision:selected.value!.revision}}),"Ключевая заметка обновлена");}
+function noteInput(event:Event){const input=event.target as HTMLInputElement;keyNote.value=Array.from(input.value.normalize("NFC")).slice(0,20).join("");input.value=keyNote.value;}
 async function saveRoles() {
   if (selected.value)
     await perform(
@@ -191,12 +196,13 @@ if (restored)
     
     <div class="filter-tabs"><button :class="{active:state==='active'}" @click="state='active'">Действующие</button><button v-if="can('users.delete')" :class="{active:state==='deleted'}" @click="state='deleted'">Корзина</button></div>
     <div class="catalog-tools">
-      <span class="muted small">По регистрационному нику, имени профиля или ID</span
+      <span class="muted small">По логину, ключевой заметке, имени или ID</span
       ><label class="search-field"
         ><Icon name="search" :size="17" /><input
           v-model="search"
           type="search"
-          placeholder="Найти участника"
+          placeholder="Логин или ключевая заметка"
+          maxlength="80"
           aria-label="Найти участника"
       /></label>
     </div>
@@ -210,7 +216,7 @@ if (restored)
         >
           <span class="avatar"><Icon name="user" /></span>
           <div>
-            <strong>{{ user.username || user.display_name || "Аккаунт " + user.id.slice(0,8) }}</strong
+            <strong>{{ user.username || user.display_name || "Аккаунт " + user.id.slice(0,8) }}</strong><span v-if="user.key_note" class="key-note">{{user.key_note}}</span
             ><small>В AGL с {{ date(user.created_at) }}</small>
           </div>
           <span class="mono small user-id">{{ user.id.slice(0, 8) }}</span
@@ -228,7 +234,7 @@ if (restored)
     /></LoadState>
     <Modal
       :open="!!selected"
-      :title="selected?.username || selected?.display_name || 'Карточка аккаунта'"
+      :title="(selected?.username || selected?.display_name || 'Карточка аккаунта') + (selected?.key_note ? ' · ' + selected.key_note : '')"
       wide
       :busy="busy"
       @update:open="!$event && (selected = null)"
@@ -236,7 +242,7 @@ if (restored)
         ><p class="small muted mono break-word">{{ selected.id }}</p><div class="badge-row"><span v-if="selected.is_owner" class="badge">Owner</span><span class="badge" :class="{'badge-critical':selected.deleted_at}">{{selected.deleted_at?'В корзине':'Действующий аккаунт'}}</span></div>
         
         <div class="filter-tabs modal-tabs account-tabs">
-          <button :class="{active:tab==='overview'}" @click="tab='overview'">Об аккаунте</button><button :class="{active:tab==='notes'}" @click="tab='notes'">Закрытые заметки</button>
+          <button :class="{active:tab==='overview'}" @click="tab='overview'">Об аккаунте</button><button v-if="can('metrics.read','rublemet')" :class="{active:tab==='saves'}" @click="tab='saves'">Игра</button><button :class="{active:tab==='notes'}" @click="tab='notes'">Закрытые заметки</button>
           <button :class="{ active: tab === 'roles' }" @click="tab = 'roles'">
             Роли</button
           ><button
@@ -248,8 +254,10 @@ if (restored)
             Ограничения
           </button>
         </div>
+        <PlayerSaves v-if="tab==='saves'" :account-id="selected.id"/>
         <section v-if="tab==='overview'" class="account-overview">
           <dl class="account-facts"><div><dt>Регистрационный ник</dt><dd>{{selected.username||'Не получен из AGL ID'}}</dd></div><div><dt>Имя профиля</dt><dd>{{selected.display_name||'Не указано'}}</dd></div><div><dt>Язык</dt><dd>{{selected.locale}}</dd></div><div><dt>Создан</dt><dd>{{date(selected.created_at)}}</dd></div><div><dt>Профиль обновлён</dt><dd>{{date(selected.updated_at)}}</dd></div><div><dt>Версия профиля</dt><dd>{{selected.revision}}</dd></div><div v-if="selected.deleted_at"><dt>В корзине с</dt><dd>{{date(selected.deleted_at)}}</dd></div></dl>
+          <form v-if="selected.capabilities.key_note" class="form-stack inset-form" @submit.prevent="saveKeyNote"><label>Ключевая заметка<input :value="keyNote" @input="noteInput" aria-describedby="key-note-hint"/></label><small id="key-note-hint" class="field-note">{{Array.from(keyNote).length}} / 20 · видна сотрудникам в списках рядом с логином</small><button class="button secondary small" :disabled="busy||keyNote===(selected.key_note||'')">Сохранить заметку</button></form><p v-else-if="selected.key_note" class="key-note">{{selected.key_note}}</p>
           <h3>Описание профиля</h3><p class="note-body">{{selected.bio||'Не заполнено'}}</p>
           <h3>Роли</h3><div class="badge-row"><span v-if="selected.is_owner" class="badge">Owner · полный доступ</span><span v-for="r in selected.is_owner?[]:selected.role_details" :key="r.slug" class="badge">{{r.title}}</span><span v-if="!selected.is_owner&&!selected.role_details.length" class="muted">Базовый аккаунт</span></div>
           <h3>Доверенные проекты</h3><ul v-if="selected.projects.length" class="account-memberships"><li v-for="p in selected.projects" :key="p.slug"><strong>{{p.title}}</strong><span>{{p.kind==='developer'?'Разработчик':'Тестировщик'}}{{p.deleted_at?' · проект в корзине':''}}</span></li></ul><p v-else class="muted">Назначений нет.</p>
