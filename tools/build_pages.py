@@ -22,6 +22,9 @@ def main():
         shutil.rmtree(OUTPUT)
     shutil.copytree(ROOT / 'sites/agl/dist', OUTPUT)
     shutil.copy2(ROOT / 'CNAME', OUTPUT / 'CNAME')
+    # Keep Google Search Console / Play Console site ownership verification available.
+    verification_file = ROOT / 'google50293c402d3b6bbe.html'
+    shutil.copy2(verification_file, OUTPUT / verification_file.name)
     build_portal(OUTPUT)
     # Public Android App Link metadata and the browser return page.
     native = ROOT / 'native-android'
