@@ -109,7 +109,7 @@ export interface UserDetail extends UserSummary {
   projects:{slug:string;title:string;kind:string;deleted_at:string|null}[];
   activity:Record<string,number>;
   effective_permissions:string[];
-  capabilities:{delete:boolean;assign_roles:boolean;moderate:boolean;notes_create:boolean;key_note:boolean};
+  capabilities:{delete:boolean;assign_roles:boolean;moderate:boolean;notes_create:boolean;key_note:boolean;propose_recovery_email?:boolean};
 }
 export interface AccountNote {
   id:string;account_id:string;author_id:string;author:string;body:string;revision:number;
