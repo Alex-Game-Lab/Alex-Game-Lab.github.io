@@ -25,6 +25,7 @@ const form = reactive({
   }),
   saving = ref(false),
   phone = ref<Phone | null>(null),
+  recoveryEmail = ref<{ verified_email: string | null; proposed_email: string | null } | null>(null),
   games = ref<Game[]>([]),
   stats = ref<Record<string, Stats>>({}),
   savesOpen = ref(false),
@@ -61,6 +62,24 @@ watch(
           { private: true },
         );
     } catch {}
+  },
+  { immediate: true },
+);
+watch(
+  () => auth.user?.profile.sub,
+  async (subject, _previous, onCleanup) => {
+    recoveryEmail.value = null;
+    if (!subject) return;
+    const controller = new AbortController();
+    onCleanup(() => controller.abort());
+    try {
+      const result = await api<typeof recoveryEmail.value>("/me/recovery-email", {
+        private: true, signal: controller.signal,
+      });
+      if (!controller.signal.aborted) recoveryEmail.value = result;
+    } catch {
+      // A profile can still be used while the recovery endpoint is unavailable.
+    }
   },
   { immediate: true },
 );
@@ -239,6 +258,24 @@ async function showSaves(game: Game) {
               Изменить пароль<Icon name="out" :size="16" />
             </button>
             <div class="settings-divider"></div>
+            <template v-if="recoveryEmail">
+              <h3>Почта для восстановления</h3>
+              <p v-if="recoveryEmail.verified_email">
+                {{ recoveryEmail.verified_email }} · подтверждена
+              </p>
+              <p v-if="recoveryEmail.proposed_email">
+                Администратор предложил {{ recoveryEmail.proposed_email }}.
+                Чтобы привязать адрес, укажи его в AGL ID и открой ссылку из письма.
+              </p>
+              <p v-else-if="!recoveryEmail.verified_email">
+                Подтверди почту, чтобы восстановить доступ, если забудешь пароль.
+              </p>
+              <button class="button secondary full" @click="login('email')">
+                {{ recoveryEmail.verified_email ? "Изменить почту" : "Добавить почту" }}
+                <Icon name="out" :size="16" />
+              </button>
+              <div class="settings-divider"></div>
+            </template>
             <h3>Номер телефона</h3>
             <p v-if="phone?.linked">{{ phone.masked_phone }} · подтверждён</p>
             <p v-else-if="phone?.enabled">

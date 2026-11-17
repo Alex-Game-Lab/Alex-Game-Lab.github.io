@@ -23,6 +23,7 @@ import PlayerSaves from "../components/PlayerSaves.vue";
 import AccountNotes from "../components/AccountNotes.vue";
 import TrashDialog from "../components/TrashDialog.vue";
 const keyNote=ref("");
+const recoveryEmail = ref("");
 const state=ref("active"), trashOpen=ref(false);
 const search = ref(""),
   query = ref(""),
@@ -108,6 +109,24 @@ async function perform(work: () => Promise<unknown>, message: string) {
   }
 }
 watch(state,()=>offset.value=0);
+watch(() => selected.value?.id, () => { recoveryEmail.value = ""; });
+
+async function proposeRecoveryEmail() {
+  const account = selected.value;
+  if (!account?.capabilities.propose_recovery_email) return;
+  busy.value = true;
+  try {
+    await api("/staff/users/" + account.id + "/recovery-email", {
+      private: true, method: "PUT", body: { email: recoveryEmail.value.trim() },
+    });
+    if (selected.value?.id === account.id) recoveryEmail.value = "";
+    notify("Адрес предложен. Пользователь увидит его в своём профиле.");
+  } catch (error) {
+    notify(errorMessage(error), true);
+  } finally {
+    busy.value = false;
+  }
+}
 async function trashAccount(payload:{confirmation:string;expected_revision:number;reason:string}){if(!selected.value)return;const row=selected.value;await perform(async()=>{await api("/staff/users/"+row.id+(row.deleted_at?"/restore":""),{private:true,method:row.deleted_at?"POST":"DELETE",body:payload});trashOpen.value=false;},row.deleted_at?"Аккаунт восстановлен":"Аккаунт перемещён в корзину");}
 const expiry = (value: string) =>
   value ? new Date(value).toISOString() : null;
@@ -259,6 +278,13 @@ if (restored)
           <dl class="account-facts"><div><dt>Регистрационный ник</dt><dd>{{selected.username||'Не получен из AGL ID'}}</dd></div><div><dt>Имя профиля</dt><dd>{{selected.display_name||'Не указано'}}</dd></div><div><dt>Язык</dt><dd>{{selected.locale}}</dd></div><div><dt>Создан</dt><dd>{{date(selected.created_at)}}</dd></div><div><dt>Профиль обновлён</dt><dd>{{date(selected.updated_at)}}</dd></div><div><dt>Версия профиля</dt><dd>{{selected.revision}}</dd></div><div v-if="selected.deleted_at"><dt>В корзине с</dt><dd>{{date(selected.deleted_at)}}</dd></div></dl>
           <form v-if="selected.capabilities.key_note" class="form-stack inset-form" @submit.prevent="saveKeyNote"><label>Ключевая заметка<input :value="keyNote" @input="noteInput" aria-describedby="key-note-hint"/></label><small id="key-note-hint" class="field-note">{{Array.from(keyNote).length}} / 20 · видна сотрудникам в списках рядом с логином</small><button class="button secondary small" :disabled="busy||keyNote===(selected.key_note||'')">Сохранить заметку</button></form><p v-else-if="selected.key_note" class="key-note">{{selected.key_note}}</p>
           <h3>Описание профиля</h3><p class="note-body">{{selected.bio||'Не заполнено'}}</p>
+          <form v-if="selected.capabilities.propose_recovery_email" class="form-stack inset-form" @submit.prevent="proposeRecoveryEmail">
+            <label>Почта для восстановления
+              <input v-model.trim="recoveryEmail" type="email" required maxlength="254" autocomplete="off" />
+            </label>
+            <p class="field-note">Адрес появится в профиле пользователя. Он сможет добавить его в AGL ID и подтвердить по письму.</p>
+            <button class="button secondary small" :disabled="busy || !recoveryEmail">Предложить адрес</button>
+          </form>
           <h3>Роли</h3><div class="badge-row"><span v-if="selected.is_owner" class="badge">Owner · полный доступ</span><span v-for="r in selected.is_owner?[]:selected.role_details" :key="r.slug" class="badge">{{r.title}}</span><span v-if="!selected.is_owner&&!selected.role_details.length" class="muted">Базовый аккаунт</span></div>
           <h3>Доверенные проекты</h3><ul v-if="selected.projects.length" class="account-memberships"><li v-for="p in selected.projects" :key="p.slug"><strong>{{p.title}}</strong><span>{{p.kind==='developer'?'Разработчик':'Тестировщик'}}{{p.deleted_at?' · проект в корзине':''}}</span></li></ul><p v-else class="muted">Назначений нет.</p>
           <h3>Материалы и игра</h3><dl class="account-facts"><div v-for="(label,key) in {publications:'Публикации',reports:'Отчёты',reviews:'Отзывы',save_slots:'Слоты сохранений'}" :key="key"><dt>{{label}}</dt><dd>{{selected.activity[key]||0}}</dd></div></dl>

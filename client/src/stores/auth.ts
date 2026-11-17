@@ -129,7 +129,7 @@ export async function refreshAccess() {
   auth.profile = profile;
 }
 export async function login(
-  mode: "login" | "register" | "password" | "phone" = "login",
+  mode: "login" | "register" | "password" | "phone" | "email" = "login",
 ) {
   try {
     const client = "agl-web";
@@ -138,7 +138,7 @@ export async function login(
     await m.signinRedirect({
       state: { returnTo: location.pathname + location.search + location.hash },
       ...(mode === "register" ? { prompt: "create" } : {}),
-      ...(["password", "phone"].includes(mode)
+      ...(["password", "phone", "email"].includes(mode)
         ? { prompt: "login", max_age: 0 }
         : {}),
       ...(mode === "password"
@@ -146,6 +146,9 @@ export async function login(
         : {}),
       ...(mode === "phone"
         ? { extraQueryParams: { kc_action: "agl-link-phone" } }
+        : {}),
+      ...(mode === "email"
+        ? { extraQueryParams: { kc_action: "UPDATE_EMAIL" } }
         : {}),
     });
   } catch {
