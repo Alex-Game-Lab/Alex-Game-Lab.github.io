@@ -2,9 +2,10 @@
 import { computed, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import PageLink from "../components/PageLink.vue";
-import { auth, accountName, login, hasWorkspace, canSome, can } from "../stores/auth";
+import { auth, accountName, login, hasWorkspace, canSome, can, initializeAuth } from "../stores/auth";
 import Icon from "../components/Icon.vue";
 import EmptyState from "../components/EmptyState.vue";
+import LoadState from "../components/LoadState.vue";
 const route = useRoute(),
   open = ref(false);
 watch(
@@ -102,6 +103,7 @@ const groups = computed(() =>
     <div v-if="auth.loading" class="loading-state">
       <Icon name="loading" class="spin" />Открываем пространство…
     </div>
+    <LoadState v-else-if="auth.loadError" :error="auth.loadError" @retry="initializeAuth" />
     <EmptyState
       v-else-if="!auth.user"
       title="Войти в рабочее пространство"

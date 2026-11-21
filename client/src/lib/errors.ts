@@ -31,6 +31,7 @@ export function errorMessage(error: unknown): string {
         already_deleted: "Запись уже находится в корзине. Обнови список.",
         publication_requires_admin: "Для публикации нужно отдельное право на этот проект.",
         authentication_required: "Войди в аккаунт, чтобы продолжить.",
+        session_refresh_unavailable: "Не удалось обновить сессию AGL ID. Проверь соединение и повтори действие.",
         delegation_ceiling: "Admin может управлять только младшими ролями.",
         owner_is_not_assignable:
           "Owner закреплён за владельцем и не назначается как роль.",
