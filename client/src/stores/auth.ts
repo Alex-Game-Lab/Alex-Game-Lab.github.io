@@ -1,5 +1,6 @@
 import { reactive, computed } from "vue";
 import {
+  ErrorResponse,
   UserManager,
   User,
   InMemoryWebStorage,
@@ -16,10 +17,22 @@ export const auth = reactive<{
   access: Access | null;
   loading: boolean;
   ready: boolean;
-}>({ user: null, profile: null, access: null, loading: true, ready: false });
+  loadError: string;
+}>({ user: null, profile: null, access: null, loading: true, ready: false, loadError: "" });
 export const accountName = computed(()=>{const nick=auth.user?.profile.preferred_username;return typeof nick==='string'&&nick&&!nick.toLowerCase().startsWith('tel_')&&!nick.toLowerCase().startsWith('phone_')&&!nick.includes('@')?nick:auth.profile?.display_name||'Профиль';});
 let current: UserManager | null = null;
-let renewing: Promise<User | null> | null = null;
+let renewing: Promise<void> | null = null;
+const signInTimeoutSeconds = 12;
+const signInErrors = new Set([
+  "login_required",
+  "interaction_required",
+  "account_selection_required",
+  "consent_required",
+  "invalid_grant",
+]);
+function needsSignIn(error: unknown) {
+  return error instanceof ErrorResponse && signInErrors.has(error.error ?? "");
+}
 export function makeManager(client = "agl-web") {
   return new UserManager({
     authority: ISSUER,
@@ -36,7 +49,8 @@ export function makeManager(client = "agl-web") {
     monitorSession: false,
     loadUserInfo: true,
     revokeTokensOnSignout: true,
-    silentRequestTimeoutInSeconds: 4,
+    requestTimeoutInSeconds: signInTimeoutSeconds,
+    silentRequestTimeoutInSeconds: signInTimeoutSeconds,
   });
 }
 export function can(permission: string, project?: string) {
@@ -90,17 +104,28 @@ export const hasWorkspace = computed(
     !!auth.user &&
     (auth.access?.owner || teamPermissions.some((p) => canSome(p))),
 );
-export async function accessToken() {
-  if (!auth.user) throw new ApiError("authentication_required", 401);
-  if (auth.user.expired || (auth.user.expires_in ?? 0) < 30) {
-    try {
-      if (!renewing)
-        renewing = current!.signinSilent().finally(() => (renewing = null));
-      auth.user = await renewing;
-    } catch {
-      await clearAuth();
-      throw new ApiError("authentication_required", 401);
+async function renewUser(manager: UserManager, previous: User) {
+  let user: User | null = null;
+  try {
+    user = await manager.signinSilent({
+      silentRequestTimeoutInSeconds: signInTimeoutSeconds,
+    });
+  } catch (error) {
+    if (!needsSignIn(error)) {
+      if ((previous.expires_in ?? 0) > 0) return;
+      throw new ApiError("session_refresh_unavailable", 503);
     }
+  }
+  if (auth.user !== previous) return;
+  if (user) auth.user = user;
+  else await clearAuth();
+}
+export async function accessToken() {
+  if (!auth.user || !current) throw new ApiError("authentication_required", 401);
+  if ((auth.user.expires_in ?? 0) < 30) {
+    await (renewing ??= renewUser(current, auth.user).finally(() => {
+      renewing = null;
+    }));
   }
   if (!auth.user) throw new ApiError("authentication_required", 401);
   return auth.user.access_token;
@@ -171,40 +196,47 @@ export async function logout() {
   }
 }
 export async function initializeAuth(): Promise<string | null> {
+  auth.loading = true;
+  auth.loadError = "";
+  const callback = location.pathname === "/auth/callback/";
+  let target: string | null = null;
   try {
-    if (location.pathname === "/auth/callback/") {
+    if (callback) {
       const client = sessionStorage.getItem("agl.login.client");
       if (!["agl-web", "agl-console"].includes(client || ""))
         throw new Error("Unknown login request");
       current = makeManager(client!);
       auth.user = await current.signinRedirectCallback(location.href);
       sessionStorage.removeItem("agl.login.client");
-      await refreshAccess();
-      const target = (auth.user.state as { returnTo?: string })?.returnTo;
-      return target &&
-        target.startsWith("/") &&
-        !target.startsWith("//") &&
-        !target.startsWith("/auth/")
-        ? target
+      const returnTo = (auth.user.state as { returnTo?: string })?.returnTo;
+      target = returnTo &&
+        returnTo.startsWith("/") &&
+        !returnTo.startsWith("//") &&
+        !returnTo.startsWith("/auth/")
+        ? returnTo
         : "/profile/";
-    }
-    current = makeManager();
-    try {
+    } else if (!auth.user) {
+      current = makeManager();
       auth.user = await current.signinSilent();
-      if (auth.user) await refreshAccess();
-    } catch (e) {
-      if(e instanceof ApiError && e.code === "account_deleted") notify(errorMessage(e),true);
-      auth.user = null;
-      auth.access = null;
-      auth.profile = null;
     }
-  } catch (e) {
-    await clearAuth();
-    notify(e instanceof ApiError && e.code === "account_deleted" ? errorMessage(e) : "Вход не завершён. Попробуй войти снова.", true);
-    return "/profile/";
+    await refreshAccess();
+  } catch (error) {
+    if (error instanceof ApiError && (error.status === 401 || error.code === "account_deleted")) {
+      await clearAuth();
+      notify(errorMessage(error), true);
+    } else if (callback && !auth.user) {
+      sessionStorage.removeItem("agl.login.client");
+      await clearAuth();
+      notify("Вход не завершён. Попробуй войти снова.", true);
+      target = "/profile/";
+    } else if (!needsSignIn(error)) {
+      auth.loadError = auth.user
+        ? errorMessage(error)
+        : "Не удалось проверить вход AGL ID. Проверь соединение.";
+    }
   } finally {
     auth.loading = false;
     auth.ready = true;
   }
-  return null;
+  return target;
 }

@@ -9,7 +9,7 @@ import LoadState from './LoadState.vue';
 const props=defineProps<{accountId:string}>();
 const saves=ref<CloudSave[]>([]), loading=ref(false), error=ref(''), editable=ref(false), editing=ref<CloudSave|null>(null), busy=ref(false), reason=ref(''), raw=ref('');
 const values=ref({cash:0,total:0,swipes:0});
-const url=()=>'/staff/users/'+props.accountId+'/games/rublemet/saves';
+const url=()=>'/staff/users/'+encodeURIComponent(props.accountId)+'/games/rublemet/saves';
 async function load(){loading.value=true;error.value='';try{const result=await api<{items:CloudSave[];editable:boolean}>(url(),{private:true});saves.value=result.items;editable.value=result.editable;}catch(e){error.value=errorMessage(e)}finally{loading.value=false}}
 watch(()=>props.accountId,()=>{editing.value=null;void load()},{immediate:true});
 function edit(save:CloudSave){editing.value=save;values.value={cash:save.payload.state.cash,total:save.payload.state.total,swipes:save.payload.state.swipes};raw.value=JSON.stringify(save.payload.state,null,2);reason.value='';}

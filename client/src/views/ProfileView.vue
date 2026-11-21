@@ -8,6 +8,7 @@ import {
   logout,
   refreshAccess,
   hasWorkspace,
+  initializeAuth,
 } from "../stores/auth";
 import { api } from "../lib/api";
 import { notify } from "../stores/notices";
@@ -108,8 +109,21 @@ async function showSaves(game: Game) {
     <div v-if="auth.loading" class="loading-state">
       <Icon name="loading" class="spin" />Открываем профиль…
     </div>
-    <template v-else-if="!auth.user"><section class="compact-auth" aria-labelledby="auth-title"><Icon name="shield" :size="32"/><h1 id="auth-title">AGL ID</h1><div class="button-row"><button class="button" @click="login()">Войти<Icon name="out"/></button><button class="button secondary" @click="login('register')">Регистрация<Icon name="plus"/></button></div><p>Для регистрации нужны ник и пароль. Почта необязательна.</p><a href="/privacy/" class="text-link">Данные и конфиденциальность<Icon name="shield" :size="16"/></a></section></template
-    ><template v-else>
+    <template v-else-if="!auth.user">
+      <LoadState v-if="auth.loadError" :error="auth.loadError" @retry="initializeAuth" />
+      <section class="compact-auth" aria-labelledby="auth-title">
+        <Icon name="shield" :size="32" />
+        <h1 id="auth-title">AGL ID</h1>
+        <div class="button-row">
+          <button class="button" @click="login()">Войти<Icon name="out" /></button>
+          <button class="button secondary" @click="login('register')">Регистрация<Icon name="plus" /></button>
+        </div>
+        <p>Для регистрации нужны ник и пароль. Почта необязательна.</p>
+        <a href="/privacy/" class="text-link">Данные и конфиденциальность<Icon name="shield" :size="16" /></a>
+      </section>
+    </template>
+    <LoadState v-else-if="auth.loadError" :error="auth.loadError" @retry="initializeAuth" />
+    <template v-else>
       <header class="profile-cover">
         <div class="profile-identity">
           <div class="avatar huge" :class="'avatar-' + form.avatar_key">

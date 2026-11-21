@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, reactive, watch } from "vue";
 import { api } from "../lib/api";
-import { auth, can, canSome } from "../stores/auth";
+import { can } from "../stores/auth";
 import { notify } from "../stores/notices";
 import { errorMessage } from "../lib/errors";
 import { saveDraft, readDraft, removeDraft } from "../lib/drafts";
@@ -9,20 +9,29 @@ import type { Game, Page, UserSummary, Stats } from "../lib/types";
 import Icon from "../components/Icon.vue";
 import LoadState from "../components/LoadState.vue";
 import Modal from "../components/Modal.vue";
+import PlayerSaves from "../components/PlayerSaves.vue";
+
+interface TelemetrySummary {
+  items: { event: string; events: number; accounts: number }[];
+}
+
 const games = ref<Game[]>([]),
   users = ref<UserSummary[]>([]),
   game = ref("rublemet"),
   days = ref(7),
-  data = ref<any>(null),
+  data = ref<TelemetrySummary | null>(null),
   loading = ref(false),
   error = ref(""),
   account = ref(""),
+  saveAccount = ref(""),
   stats = ref<Stats | null>(null),
   adjustOpen = ref(false),
   busy = ref(false),
   operation = ref<string>(crypto.randomUUID());
 const form = reactive({ balance_delta: 0, reason: "" }),
   metricRows = ref<{ key: string; value: number }[]>([]);
+let telemetryRequest = 0;
+let statsRequest = 0;
 const eventNames: Record<string, string> = {
   session_started: "Начало сессии",
   session_ended: "Завершение сессии",
@@ -42,34 +51,52 @@ void Promise.all([
   })
   .catch((e) => notify(errorMessage(e), true));
 async function reload() {
-  if (!can("metrics.read", game.value)) return;
-  loading.value = true;
+  const request = ++telemetryRequest;
+  data.value = null;
   error.value = "";
+  loading.value = can("metrics.read", game.value);
+  if (!loading.value) return;
   try {
-    data.value = await api(
+    const result = await api<TelemetrySummary>(
       "/staff/metrics?project_slug=" + game.value + "&days=" + days.value,
       { private: true },
     );
+    if (request === telemetryRequest) data.value = result;
   } catch (e) {
-    error.value = errorMessage(e);
+    if (request === telemetryRequest) error.value = errorMessage(e);
   } finally {
-    loading.value = false;
+    if (request === telemetryRequest) loading.value = false;
   }
 }
 watch([game, days], reload, { immediate: true });
+watch([account, game], () => {
+  statsRequest++;
+  stats.value = null;
+  saveAccount.value = "";
+}, { flush: "sync" });
 async function readStats() {
-  if (!account.value) return;
+  const id = account.value.trim();
+  if (!id) return;
+  if (game.value === "rublemet") {
+    saveAccount.value = id;
+    return;
+  }
+  const request = ++statsRequest;
+  stats.value = null;
   try {
-    stats.value = await api<Stats>(
-      "/staff/users/" + account.value + "/games/" + game.value + "/stats",
+    const result = await api<Stats>(
+      "/staff/users/" + encodeURIComponent(id) + "/games/" + game.value + "/stats",
       { private: true },
     );
+    if (request === statsRequest) stats.value = result;
   } catch (e) {
-    notify(errorMessage(e), true);
+    if (request === statsRequest) notify(errorMessage(e), true);
   }
 }
 async function adjust() {
-  if (!account.value) return;
+  const id = account.value.trim();
+  const slug = game.value;
+  if (!id || slug === "rublemet") return;
   if (
     !Number.isSafeInteger(form.balance_delta) ||
     metricRows.value.some((r) => !r.key || !Number.isSafeInteger(r.value))
@@ -79,8 +106,8 @@ async function adjust() {
   }
   busy.value = true;
   try {
-    const result = await api<any>(
-      "/staff/users/" + account.value + "/games/" + game.value + "/adjustments",
+    const result = await api<{ stats: Stats }>(
+      "/staff/users/" + encodeURIComponent(id) + "/games/" + slug + "/adjustments",
       {
         private: true,
         method: "POST",
@@ -93,7 +120,7 @@ async function adjust() {
         },
       },
     );
-    stats.value = result.stats;
+    if (id === account.value.trim() && slug === game.value) stats.value = result.stats;
     removeDraft("adjustment");
     adjustOpen.value = false;
     operation.value = crypto.randomUUID();
@@ -128,15 +155,15 @@ const restored = readDraft<{
   form: typeof form;
   rows: typeof metricRows.value;
 }>("adjustment");
-if (restored) {
+if (restored && restored.game !== "rublemet") {
   account.value = restored.account;
   game.value = restored.game;
   operation.value = restored.operation;
   Object.assign(form, restored.form);
   metricRows.value = restored.rows;
   adjustOpen.value = true;
-  removeDraft("adjustment");
 }
+if (restored) removeDraft("adjustment");
 </script>
 <template>
   <div>
@@ -205,20 +232,25 @@ if (restored) {
         ><button
           v-if="can('metrics.read', game)"
           class="button secondary"
-          :disabled="!account"
+          :disabled="!account.trim() || saveAccount === account.trim()"
           @click="readStats"
         >
           Посмотреть<Icon name="arrow" :size="17" /></button
         ><button
-          v-if="can('players.adjust', game)"
+          v-if="game !== 'rublemet' && can('players.adjust', game)"
           class="button"
-          :disabled="!account"
+          :disabled="!account.trim()"
           @click="openAdjust"
         >
           Изменить показатели<Icon name="edit" :size="17" />
         </button>
       </div>
-      <div v-if="stats" class="stats-values">
+      <PlayerSaves
+        v-if="saveAccount && can('metrics.read', game)"
+        :key="saveAccount"
+        :account-id="saveAccount"
+      />
+      <div v-else-if="stats" class="stats-values">
         <article>
           <span>Баланс</span
           ><strong>{{ stats.balance.toLocaleString("ru-RU") }}</strong>

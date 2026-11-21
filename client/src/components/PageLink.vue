@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { computed } from "vue";
-import { useRoute, useRouter, type RouteLocationRaw } from "vue-router";
+import { RouterLink, useRoute, type RouteLocationRaw } from "vue-router";
 
-const props = withDefaults(defineProps<{
+withDefaults(defineProps<{
   to: RouteLocationRaw;
   activeClass?: string;
   exactActiveClass?: string;
@@ -10,16 +9,22 @@ const props = withDefaults(defineProps<{
   activeClass: "router-link-active",
   exactActiveClass: "router-link-exact-active",
 });
-const router = useRouter();
 const route = useRoute();
-const target = computed(() => router.resolve(props.to));
-const exact = computed(() => route.path === target.value.path);
-const active = computed(() => exact.value ||
-  (target.value.path !== "/" && route.path.startsWith(target.value.path)));
+function isActive(path: string) {
+  return route.path === path || (path !== "/" && route.path.startsWith(path));
+}
+function staysInWorkspace(path: string) {
+  return route.path.startsWith("/workspace/") && path.startsWith("/workspace/");
+}
 </script>
 
 <template>
-  <a :href="target.href"
-    :class="{ [activeClass]: active, [exactActiveClass]: exact }"
-    :aria-current="exact ? 'page' : undefined"><slot /></a>
+  <RouterLink :to="to" custom v-slot="{ href, route: target, navigate }">
+    <a
+      :href="href"
+      :class="{ [activeClass]: isActive(target.path), [exactActiveClass]: route.path === target.path }"
+      :aria-current="route.path === target.path ? 'page' : undefined"
+      @click="staysInWorkspace(target.path) && navigate($event)"
+    ><slot /></a>
+  </RouterLink>
 </template>
